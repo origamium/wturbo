@@ -14,6 +14,12 @@ import { getWorktreePath, listWorktrees, removeWorktree } from "../../core/git/w
 import { CLIError, getErrorMessage } from "../../utils/error.js"
 import { executeLifecycleCommand } from "../../utils/exec.js"
 
+interface RemoveOptions {
+  force?: boolean
+  docker?: boolean
+  end?: boolean
+}
+
 /**
  * removeコマンドを作成
  */
@@ -22,7 +28,9 @@ export function removeCommand(): Command {
     .description("Remove a git worktree for the specified branch")
     .argument("<branch>", "Branch name of the worktree to remove")
     .option("-f, --force", "Force removal even if worktree has uncommitted changes")
-    .action(async (branch: string, options: { force?: boolean }) => {
+    .option("--no-docker", "Skip Docker Compose teardown")
+    .option("--no-end", "Skip end_command execution")
+    .action(async (branch: string, options: RemoveOptions) => {
       try {
         await executeRemoveCommand(branch, options)
       } catch (error) {
@@ -39,7 +47,7 @@ export function removeCommand(): Command {
 /**
  * removeコマンドのメイン実行ロジック
  */
-async function executeRemoveCommand(branch: string, options: { force?: boolean }): Promise<void> {
+async function executeRemoveCommand(branch: string, options: RemoveOptions): Promise<void> {
   // Git リポジトリチェック
   if (!isGitRepository()) {
     throw new CLIError("Not in a git repository", EXIT_CODES.NOT_GIT_REPOSITORY)
@@ -74,21 +82,36 @@ async function executeRemoveCommand(branch: string, options: { force?: boolean }
 
   const config = loadConfig(gitRoot)
 
-  // Docker Compose teardown（end_command がない場合 && compose ファイルが worktree に存在）
-  if (!config.end_command) {
-    const worktreeComposePath = path.resolve(worktreePath, config.docker_compose_file)
-    if (existsSync(worktreeComposePath)) {
+  const skipDocker = options.docker === false
+  const skipEnd = options.end === false
+
+  // Docker Compose teardown
+  // - Only if compose file is actually configured (avoid path.resolve("") → worktree root bug)
+  // - Skipped automatically when end_command is set (user owns teardown)
+  if (config.docker_compose_file) {
+    if (skipDocker) {
       console.log("")
-      console.log("🐳 Stopping Docker Compose services...")
-      await runDockerComposeDown(worktreePath)
+      console.log("⏭️  Skipping Docker Compose teardown (--no-docker)")
+    } else if (!config.end_command) {
+      const worktreeComposePath = path.resolve(worktreePath, config.docker_compose_file)
+      if (existsSync(worktreeComposePath)) {
+        console.log("")
+        console.log("🐳 Stopping Docker Compose services...")
+        await runDockerComposeDown(worktreePath)
+      }
     }
   }
 
   // end_commandの実行（worktree削除前）
   if (config.end_command) {
-    console.log("")
-    console.log(`🛑 Running end command: ${config.end_command}`)
-    await executeEndCommand(config.end_command, worktreePath)
+    if (skipEnd) {
+      console.log("")
+      console.log("⏭️  Skipping end command (--no-end)")
+    } else {
+      console.log("")
+      console.log(`🛑 Running end command: ${config.end_command}`)
+      await executeEndCommand(config.end_command, worktreePath)
+    }
   }
 
   // worktreeを削除

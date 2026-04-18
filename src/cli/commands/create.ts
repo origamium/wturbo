@@ -22,6 +22,17 @@ import type { WTurboConfig } from "../../types/index.js"
 import { CLIError, getErrorMessage } from "../../utils/error.js"
 import { executeLifecycleCommand } from "../../utils/exec.js"
 
+interface CreateOptions {
+  path?: string
+  createBranch?: boolean
+  docker?: boolean
+  env?: boolean
+  copy?: boolean
+  link?: boolean
+  start?: boolean
+  dryRun?: boolean
+}
+
 /**
  * createコマンドを作成
  */
@@ -31,7 +42,13 @@ export function createCommand(): Command {
     .argument("<branch>", "Branch name to create worktree for")
     .option("-p, --path <path>", "Custom path for the worktree")
     .option("--no-create-branch", "Use existing branch instead of creating new one")
-    .action(async (branch: string, options: { path?: string; createBranch?: boolean }) => {
+    .option("--no-docker", "Skip Docker Compose setup")
+    .option("--no-env", "Skip environment file processing")
+    .option("--no-copy", "Skip file copying")
+    .option("--no-link", "Skip symlink creation")
+    .option("--no-start", "Skip start_command execution")
+    .option("--dry-run", "Show what would be done without making changes")
+    .action(async (branch: string, options: CreateOptions) => {
       try {
         await executeCreateCommand(branch, options)
       } catch (error) {
@@ -50,7 +67,7 @@ export function createCommand(): Command {
  */
 async function executeCreateCommand(
   branch: string,
-  options: { path?: string; createBranch?: boolean }
+  options: CreateOptions
 ): Promise<void> {
   // Git リポジトリチェック
   if (!isGitRepository()) {
@@ -75,6 +92,18 @@ async function executeCreateCommand(
   const worktreePath = options.path
     ? path.resolve(options.path)
     : path.join(path.dirname(gitRoot), `worktree-${sanitizedBranch}`)
+
+  const skipDocker = options.docker === false
+  const skipEnv = options.env === false
+  const skipCopy = options.copy === false
+  const skipLink = options.link === false
+  const skipStart = options.start === false
+  const dryRun = options.dryRun === true
+
+  if (dryRun) {
+    console.log("🔍 Dry run mode — no changes will be made")
+    console.log("")
+  }
 
   console.log(`🌿 Creating worktree for branch: ${branch}`)
   console.log(`📂 Worktree path: ${worktreePath}`)
@@ -101,32 +130,55 @@ async function executeCreateCommand(
   const config = loadConfig(gitRoot)
 
   // worktreeを作成（新規ブランチの場合は base_branch を使用）
-  createWorktree(branch, worktreePath, {
-    useExistingBranch,
-    baseBranch: useExistingBranch ? undefined : config.base_branch,
-  })
+  if (dryRun) {
+    console.log(`  [dry-run] Would create worktree at ${worktreePath}`)
+  } else {
+    createWorktree(branch, worktreePath, {
+      useExistingBranch,
+      baseBranch: useExistingBranch ? undefined : config.base_branch,
+    })
+  }
 
   // link_files に含まれるパスはコピーをスキップしてシンボリックリンクを優先する
   const linkFileSet = new Set(config.link_files ?? [])
   const filesToCopy = (config.copy_files ?? []).filter((p) => !linkFileSet.has(p))
 
+  // File copying phase
   if (filesToCopy.length > 0) {
     console.log("")
-    console.log("📋 Copying files/directories...")
-    await copyConfiguredFiles(gitRoot, worktreePath, filesToCopy)
+    if (skipCopy) {
+      console.log("⏭️  Skipping file copy (--no-copy)")
+    } else if (dryRun) {
+      console.log(`📋 Would copy files: ${filesToCopy.join(", ")}`)
+    } else {
+      console.log("📋 Copying files/directories...")
+      await copyConfiguredFiles(gitRoot, worktreePath, filesToCopy)
+    }
   }
 
-  if (config.link_files && config.link_files.length > 0) {
+  // Symlink phase
+  const linkFiles = config.link_files ?? []
+  if (linkFiles.length > 0) {
     console.log("")
-    console.log("🔗 Creating symlinks...")
-    await linkConfiguredFiles(gitRoot, worktreePath, config.link_files)
+    if (skipLink) {
+      console.log("⏭️  Skipping symlink creation (--no-link)")
+    } else if (dryRun) {
+      console.log(`🔗 Would create symlinks: ${linkFiles.join(", ")}`)
+    } else {
+      console.log("🔗 Creating symlinks...")
+      await linkConfiguredFiles(gitRoot, worktreePath, linkFiles)
+    }
   }
 
-  // env.file の処理
-  // adjust あり → 調整コピー、なし → 通常コピー（どちらも env.file が空でない場合のみ）
+  // Environment file phase
   if (config.env.file.length > 0) {
     console.log("")
-    if (Object.keys(config.env.adjust).length > 0) {
+    if (skipEnv) {
+      console.log("⏭️  Skipping environment file processing (--no-env)")
+    } else if (dryRun) {
+      const mode = Object.keys(config.env.adjust).length > 0 ? "adjust" : "copy"
+      console.log(`🔧 Would process environment files (${mode}): ${config.env.file.join(", ")}`)
+    } else if (Object.keys(config.env.adjust).length > 0) {
       console.log("🔧 Adjusting environment files...")
       await applyEnvAdjustments(gitRoot, worktreePath, config)
     } else {
@@ -135,30 +187,56 @@ async function executeCreateCommand(
     }
   }
 
-  // Docker Compose のセットアップ（compose ファイルのコピー + ポート調整）
-  await setupDockerCompose(gitRoot, worktreePath, config)
+  // Docker Compose phase
+  if (config.docker_compose_file) {
+    console.log("")
+    if (skipDocker) {
+      console.log("⏭️  Skipping Docker Compose setup (--no-docker)")
+    } else if (dryRun) {
+      const sourceComposePath = path.resolve(gitRoot, config.docker_compose_file)
+      if (existsSync(sourceComposePath)) {
+        console.log(`🐳 Would configure Docker Compose: ${config.docker_compose_file}`)
+      } else {
+        console.log(
+          `⚠️  Docker Compose source not found: ${config.docker_compose_file} (would skip)`
+        )
+      }
+    } else {
+      await setupDockerCompose(gitRoot, worktreePath, config)
+    }
+  }
 
-  // start_commandの実行
+  // start_command phase
   if (config.start_command) {
     console.log("")
-    console.log(`🚀 Running start command: ${config.start_command}`)
-    await executeStartCommand(config.start_command, worktreePath)
+    if (skipStart) {
+      console.log("⏭️  Skipping start command (--no-start)")
+    } else if (dryRun) {
+      console.log(`🚀 Would run start command: ${config.start_command}`)
+    } else {
+      console.log(`🚀 Running start command: ${config.start_command}`)
+      await executeStartCommand(config.start_command, worktreePath)
+    }
   }
 
   // 成功メッセージ
   console.log("")
-  console.log("🎉 Worktree created successfully!")
-  console.log("")
-  console.log("Next steps:")
-  console.log(`  cd ${worktreePath}`)
-  console.log("  # Start working on your branch")
+  if (dryRun) {
+    console.log("🔍 Dry run complete — no changes were made")
+  } else {
+    console.log("🎉 Worktree created successfully!")
+    console.log("")
+    console.log("Next steps:")
+    console.log(`  cd ${worktreePath}`)
+    console.log("  # Start working on your branch")
 
-  console.log("")
-  console.log("📋 Current worktrees:")
-  const worktrees = listWorktrees()
-  for (const wt of worktrees) {
-    const isNew = wt.branch === branch
-    console.log(`  ${isNew ? "→" : " "} ${wt.branch}: ${wt.path}`)
+    console.log("")
+    console.log("📋 Current worktrees:")
+    const worktrees = listWorktrees()
+    for (const wt of worktrees) {
+      const isNew = wt.branch === branch
+      console.log(`  ${isNew ? "→" : " "} ${wt.branch}: ${wt.path}`)
+    }
   }
 }
 
@@ -286,7 +364,10 @@ async function setupDockerCompose(
   if (!config.docker_compose_file) return
 
   const sourceComposePath = path.resolve(gitRoot, config.docker_compose_file)
-  if (!existsSync(sourceComposePath)) return
+  if (!existsSync(sourceComposePath)) {
+    console.log(`⚠️  Docker Compose source not found: ${config.docker_compose_file} (skipped)`)
+    return
+  }
 
   const targetComposePath = path.resolve(worktreePath, config.docker_compose_file)
 
@@ -294,7 +375,6 @@ async function setupDockerCompose(
   if (existsSync(targetComposePath)) return
 
   try {
-    console.log("")
     console.log("🐳 Configuring Docker Compose...")
 
     const composeConfig = readComposeFile(sourceComposePath)
