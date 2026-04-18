@@ -60,6 +60,13 @@ export function parseWorktreeList(output: string): WorktreeInfo[] {
       currentWorktree.branch = branchRef.replace("refs/heads/", "")
     } else if (line.startsWith("detached")) {
       currentWorktree.branch = "(detached)"
+      currentWorktree.detached = true
+    } else if (line === "locked" || line.startsWith("locked ")) {
+      currentWorktree.locked = true
+    } else if (line === "prunable" || line.startsWith("prunable ")) {
+      currentWorktree.prunable = true
+    } else if (line === "bare") {
+      currentWorktree.bare = true
     }
   }
 

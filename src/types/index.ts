@@ -51,6 +51,44 @@ export interface WorktreeInfo {
   branch: string
   /** HEADのコミットハッシュ */
   head: string
+  /** ロック中かどうか（git worktree lock） */
+  locked?: boolean
+  /** prunable状態かどうか（参照先ディレクトリが消えている等） */
+  prunable?: boolean
+  /** ベアリポジトリかどうか */
+  bare?: boolean
+  /** detached HEAD状態かどうか */
+  detached?: boolean
+}
+
+/**
+ * 追加情報で拡張されたworktree情報（`wturbo ls -l` 用）
+ */
+export interface EnrichedWorktreeInfo extends WorktreeInfo {
+  /** 短縮コミットハッシュ（7文字） */
+  shortHash: string
+  /** 最新コミットのサブジェクト */
+  subject: string
+  /** 相対日時（例: "2h ago"） */
+  ageRelative: string
+  /** コミット時刻（ISO 8601） */
+  ageTimestamp: string
+  /** 未コミット変更があるかどうか */
+  dirty: boolean
+  /** 拡張情報取得に失敗した場合のエラーメッセージ */
+  enrichmentError?: string
+}
+
+/**
+ * `ls` コマンドのオプション
+ */
+export interface LsCommandOptions {
+  /** 長形式で表示（コミット情報・dirty状態） */
+  long?: boolean
+  /** JSON出力 */
+  json?: boolean
+  /** パスのみを出力 */
+  paths?: boolean
 }
 
 // =============================================================================
