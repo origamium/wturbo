@@ -144,7 +144,8 @@ export function loadConfig(configDir: string = process.cwd()): WTurboConfig {
 
   try {
     const configPath = configResult.path as string
-    console.log(`📋 Loading configuration from: ${path.basename(configPath)}`)
+    // informational only — write to stderr so stdout-oriented commands (ports --json, ls --json) stay clean
+    process.stderr.write(`📋 Loading configuration from: ${path.basename(configPath)}\n`)
     const content = fs.readFileSync(configPath, "utf-8")
     const parsed = parse(content) as Partial<WTurboConfig>
 

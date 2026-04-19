@@ -126,6 +126,24 @@ export function writeComposeFile(
  * // web.portsは['3002:80']に調整される
  * ```
  */
+/**
+ * Docker Compose のポートマッピング文字列を解析
+ * 対応形式: "3000:80", "0.0.0.0:3000:80", "3000:80/tcp"
+ *
+ * @returns { hostPort, containerPort } または null (解析不能)
+ */
+export function parsePortMapping(
+  portMapping: string
+): { hostPort: number; containerPort: number } | null {
+  if (typeof portMapping !== "string") return null
+  const match = portMapping.match(/^(?:[\d.]+:)?(\d+):(\d+)(?:\/\w+)?$/)
+  if (!match) return null
+  const hostPort = parseInt(match[1], 10)
+  const containerPort = parseInt(match[2], 10)
+  if (Number.isNaN(hostPort) || Number.isNaN(containerPort)) return null
+  return { hostPort, containerPort }
+}
+
 export function adjustPortsInCompose(config: ComposeConfig, usedPorts: number[]): ComposeConfig {
   // 深いコピーを作成して元のオブジェクトを変更しない
   const newConfig = structuredClone(config) as ComposeConfig
@@ -138,21 +156,18 @@ export function adjustPortsInCompose(config: ComposeConfig, usedPorts: number[])
           return portMapping
         }
 
-        // ポートマッピングの形式を解析: "3000:80" や "0.0.0.0:3000:80"
-        const match = portMapping.match(/^(?:[\d.]+:)?(\d+):(\d+)(?:\/\w+)?$/)
-        if (!match) {
+        const parsed = parsePortMapping(portMapping)
+        if (!parsed) {
           return portMapping // 解析できない形式はそのまま
         }
 
-        const [, hostPortStr] = match
-        const originalHostPort = parseInt(hostPortStr, 10)
-        const newHostPort = findAvailablePort(originalHostPort, currentlyUsed)
+        const newHostPort = findAvailablePort(parsed.hostPort, currentlyUsed)
 
         // 新しいポートを使用中リストに追加
         currentlyUsed.push(newHostPort)
 
         // 元の形式を保持して新しいポートに置換
-        return portMapping.replace(hostPortStr, newHostPort.toString())
+        return portMapping.replace(parsed.hostPort.toString(), newHostPort.toString())
       })
     }
   })
