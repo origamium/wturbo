@@ -2,7 +2,7 @@ services:
   # アプリケーションサービス
   app:
     image: node:20-alpine
-    container_name: ${COMPOSE_PROJECT_NAME:-wturbo}_app
+    container_name: ${COMPOSE_PROJECT_NAME:-wtb}_app
     working_dir: /app
     volumes:
       - .:/app
@@ -26,7 +26,7 @@ services:
   # PostgreSQL データベース
   db:
     image: postgres:16-alpine
-    container_name: ${COMPOSE_PROJECT_NAME:-wturbo}_db
+    container_name: ${COMPOSE_PROJECT_NAME:-wtb}_db
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
@@ -47,7 +47,7 @@ services:
   # Redis キャッシュ
   redis:
     image: redis:7-alpine
-    container_name: ${COMPOSE_PROJECT_NAME:-wturbo}_redis
+    container_name: ${COMPOSE_PROJECT_NAME:-wtb}_redis
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
@@ -59,7 +59,7 @@ services:
   # Adminer (データベース管理UI)
   adminer:
     image: adminer:latest
-    container_name: ${COMPOSE_PROJECT_NAME:-wturbo}_adminer
+    container_name: ${COMPOSE_PROJECT_NAME:-wtb}_adminer
     ports:
       - "${ADMINER_PORT:-8080}:8080"
     environment:
@@ -71,13 +71,13 @@ services:
 
 networks:
   app_network:
-    name: ${COMPOSE_PROJECT_NAME:-wturbo}_network
+    name: ${COMPOSE_PROJECT_NAME:-wtb}_network
     driver: bridge
 
 volumes:
   postgres_data:
-    name: ${COMPOSE_PROJECT_NAME:-wturbo}_postgres_data
+    name: ${COMPOSE_PROJECT_NAME:-wtb}_postgres_data
   redis_data:
-    name: ${COMPOSE_PROJECT_NAME:-wturbo}_redis_data
+    name: ${COMPOSE_PROJECT_NAME:-wtb}_redis_data
   node_modules:
-    name: ${COMPOSE_PROJECT_NAME:-wturbo}_node_modules
+    name: ${COMPOSE_PROJECT_NAME:-wtb}_node_modules

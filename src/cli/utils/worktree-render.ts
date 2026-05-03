@@ -1,5 +1,5 @@
 /**
- * @fileoverview Pure renderers for `wturbo ls` output formats
+ * @fileoverview Pure renderers for `wtb ls` output formats
  * 入力された WorktreeInfo[] を整形済み文字列に変換する純粋関数群
  */
 

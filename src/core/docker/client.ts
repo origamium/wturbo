@@ -4,7 +4,7 @@
  */
 
 import { execSync } from "node:child_process"
-import { DOCKER_COMMANDS, FILE_ENCODING, WTURBO_PREFIX } from "../../constants/index.js"
+import { DOCKER_COMMANDS, FILE_ENCODING, WTB_PREFIX } from "../../constants/index.js"
 import type { ContainerInfo, ExecOptions, VolumeInfo } from "../../types/index.js"
 
 /**
@@ -253,28 +253,28 @@ export function getUsedPorts(options?: ExecOptions): number[] {
 }
 
 /**
- * WTurboプロジェクトのコンテナかどうかを判定
+ * wtbプロジェクトのコンテナかどうかを判定
  *
  * @param container - 判定するコンテナ情報
- * @returns WTurboプロジェクトのコンテナの場合true
+ * @returns wtbプロジェクトのコンテナの場合true
  *
  * @example
  * ```typescript
  * const containers = getRunningContainers()
- * const wturboContainers = containers.filter(isWTurboContainer)
- * console.log(`WTurbo containers: ${wturboContainers.length}`)
+ * const wtbContainers = containers.filter(isWtbContainer)
+ * console.log(`wtb containers: ${wtbContainers.length}`)
  * ```
  */
-export function isWTurboContainer(container: ContainerInfo): boolean {
-  // コンテナ名にwturboが含まれている
-  if (container.name.includes("wturbo")) {
+export function isWtbContainer(container: ContainerInfo): boolean {
+  // コンテナ名にwtbが含まれている
+  if (container.name.includes("wtb")) {
     return true
   }
 
-  // 環境変数でWTurboプロジェクトのコンテナか判定
-  const wturboEnvVars = Object.keys(process.env).filter((key) => key.startsWith(WTURBO_PREFIX))
+  // 環境変数でwtbプロジェクトのコンテナか判定
+  const wtbEnvVars = Object.keys(process.env).filter((key) => key.startsWith(WTB_PREFIX))
 
-  return wturboEnvVars.some((envVar) => {
+  return wtbEnvVars.some((envVar) => {
     const value = process.env[envVar]
     return value && container.name.includes(value)
   })

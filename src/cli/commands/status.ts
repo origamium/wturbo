@@ -13,7 +13,7 @@ import {
   getDockerInfo,
   getDockerVolumes,
   getRunningContainers,
-  isWTurboContainer,
+  isWtbContainer,
 } from "../../core/docker/client.js"
 import { findComposeFile, readComposeFile } from "../../core/docker/compose.js"
 // Core modules
@@ -227,9 +227,9 @@ async function showRunningContainers(): Promise<void> {
   if (containers.length > 0) {
     console.log()
     containers.forEach((container) => {
-      const isWturbo = isWTurboContainer(container)
+      const isWtb = isWtbContainer(container)
 
-      console.log(`${isWturbo ? "🌿" : "📦"} ${container.name}`)
+      console.log(`${isWtb ? "🌿" : "📦"} ${container.name}`)
       console.log(`   🏷️  Image: ${container.image}`)
       console.log(`   🔗 Status: ${container.status}`)
 
@@ -252,17 +252,17 @@ async function showRunningContainers(): Promise<void> {
  */
 async function showDockerVolumes(): Promise<void> {
   const volumes = getDockerVolumes()
-  const wturboVolumes = volumes.filter(
-    (v) => v.name.includes("wturbo") || v.name.match(/.*-.*wturbo.*/) || v.name.includes("worktree")
+  const wtbVolumes = volumes.filter(
+    (v) => v.name.includes("wtb") || v.name.match(/.*-.*wtb.*/) || v.name.includes("worktree")
   )
 
   console.log(`🗂️  Total Volumes: ${volumes.length}`)
 
-  if (wturboVolumes.length > 0) {
-    console.log(`🌿 WTurbo Volumes: ${wturboVolumes.length}`)
+  if (wtbVolumes.length > 0) {
+    console.log(`🌿 wtb Volumes: ${wtbVolumes.length}`)
     console.log()
 
-    wturboVolumes.forEach((volume) => {
+    wtbVolumes.forEach((volume) => {
       console.log(`   📁 ${volume.name}`)
       console.log(`      Driver: ${volume.driver}`)
     })

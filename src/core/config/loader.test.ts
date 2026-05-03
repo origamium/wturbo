@@ -34,7 +34,7 @@ describe("Config Loader (Refactored)", () => {
   })
 
   describe("loadConfig", () => {
-    it("should load default config when no wturbo.yaml exists", () => {
+    it("should load default config when no wtb.yaml exists", () => {
       vi.mocked(existsSync).mockReturnValue(false)
 
       const config = loadConfig(testRepoPath)
@@ -46,7 +46,7 @@ describe("Config Loader (Refactored)", () => {
       expect(config.env.file).toEqual(["./.env"])
     })
 
-    it("should load custom config from wturbo.yaml", () => {
+    it("should load custom config from wtb.yaml", () => {
       const mockContent = `
 base_branch: develop
 docker_compose_file: ./docker-compose.dev.yml
@@ -107,13 +107,13 @@ env:
   describe("findConfigFile", () => {
     it("should find first existing config file", () => {
       vi.mocked(existsSync)
-        .mockReturnValueOnce(false) // wturbo.yaml
-        .mockReturnValueOnce(true) // wturbo.yml
+        .mockReturnValueOnce(false) // wtb.yaml
+        .mockReturnValueOnce(true) // wtb.yml
 
       const result = findConfigFile(testRepoPath)
 
       expect(result.exists).toBe(true)
-      expect(result.path).toContain("wturbo.yml")
+      expect(result.path).toContain("wtb.yml")
     })
 
     it("should return null when no config file exists", () => {
@@ -128,7 +128,7 @@ env:
 
   describe("createDefaultConfig", () => {
     it("should create valid YAML that can be loaded", () => {
-      const configPath = path.join(testRepoPath, "wturbo.yaml")
+      const configPath = path.join(testRepoPath, "wtb.yaml")
       vi.mocked(existsSync).mockReturnValue(false)
 
       const config = createDefaultConfig(configPath)

@@ -1,6 +1,6 @@
 /**
- * @fileoverview `wturbo init-claude` コマンド実装
- * Claude Code Skill テンプレートを .claude/skills/wturbo/ に展開する
+ * @fileoverview `wtb init-claude` コマンド実装
+ * Claude Code Skill テンプレートを .claude/skills/wtb/ に展開する
  */
 
 import { Command } from "commander"
@@ -15,10 +15,10 @@ import { installClaudeSkill } from "../utils/claude-skill-install.js"
 export function initClaudeCommand(): Command {
   return new Command("init-claude")
     .description(
-      "Install the wturbo Claude Code skill into this repo (.claude/skills/wturbo/)"
+      "Install the wtb Claude Code skill into this repo (.claude/skills/wtb/)"
     )
     .option("-f, --force", "Overwrite existing SKILL.md")
-    .option("--user", "Install globally at ~/.claude/skills/wturbo/ instead of per-repo")
+    .option("--user", "Install globally at ~/.claude/skills/wtb/ instead of per-repo")
     .option("--dry-run", "Print the target path without writing")
     .action(async (options: InitClaudeOptions) => {
       try {
@@ -58,7 +58,7 @@ async function executeInitClaudeCommand(options: InitClaudeOptions): Promise<voi
       return
     }
 
-    console.log("✅ Installed wturbo Claude Code skill")
+    console.log("✅ Installed wtb Claude Code skill")
     console.log(`   ${result.skillPath}`)
     console.log("")
     if (options.user) {
@@ -67,8 +67,8 @@ async function executeInitClaudeCommand(options: InitClaudeOptions): Promise<voi
       )
     } else {
       console.log("Next step:")
-      console.log("  git add .claude/skills/wturbo")
-      console.log("  git commit -m \"chore: install wturbo Claude Code skill\"")
+      console.log("  git add .claude/skills/wtb")
+      console.log("  git commit -m \"chore: install wtb Claude Code skill\"")
       console.log("")
       console.log(
         "Committing ensures every worktree you create picks up the skill automatically."

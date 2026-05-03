@@ -1,4 +1,4 @@
-# Missing Files WTurbo Configuration
+# Missing Files wtb Configuration
 # Tests handling of missing files and graceful degradation
 
 base_branch: "main"

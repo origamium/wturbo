@@ -215,9 +215,9 @@ export function cleanup(): void {
 }
 
 /**
- * Create a wturbo.yaml config file in the test repository
+ * Create a wtb.yaml config file in the test repository
  */
-type PartialWTurboTestConfig = {
+type PartialWtbTestConfig = {
   base_branch?: string
   docker_compose_file?: string
   env?: {
@@ -230,7 +230,7 @@ type PartialWTurboTestConfig = {
   }
 }
 
-export function createWTurboConfig(repoPath: string, config?: PartialWTurboTestConfig): void {
+export function createWtbConfig(repoPath: string, config?: PartialWtbTestConfig): void {
   const defaultConfig = {
     base_branch: "main",
     docker_compose_file: "./docker-compose.yaml",
@@ -244,7 +244,7 @@ export function createWTurboConfig(repoPath: string, config?: PartialWTurboTestC
     },
   }
 
-  const configContent = `# WTurbo Test Configuration
+  const configContent = `# wtb Test Configuration
 base_branch: ${config?.base_branch || defaultConfig.base_branch}
 docker_compose_file: ${config?.docker_compose_file || defaultConfig.docker_compose_file}
 
@@ -257,5 +257,5 @@ env:
     API_URL: "${config?.env?.adjust?.API_URL || defaultConfig.env.adjust.API_URL}"
 `
 
-  fs.writeFileSync(path.join(repoPath, "wturbo.yaml"), configContent)
+  fs.writeFileSync(path.join(repoPath, "wtb.yaml"), configContent)
 }

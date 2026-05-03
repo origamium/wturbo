@@ -1,10 +1,10 @@
 {
-  "name": "@schemelisp/wturbo",
+  "name": "@schemelisp/wtb",
   "version": "1.0.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "wturbo": "dist/cli/index.js"
+    "wtb": "dist/cli/index.js"
   },
   "files": [
     "dist",
@@ -45,11 +45,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/origamium/wturbo.git"
+    "url": "https://github.com/origamium/wtb.git"
   },
-  "homepage": "https://github.com/origamium/wturbo#readme",
+  "homepage": "https://github.com/origamium/wtb#readme",
   "bugs": {
-    "url": "https://github.com/origamium/wturbo/issues"
+    "url": "https://github.com/origamium/wtb/issues"
   },
   "description": "Git worktree management with Docker Compose environment isolation",
   "devDependencies": {

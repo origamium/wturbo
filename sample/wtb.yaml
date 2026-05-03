@@ -1,4 +1,4 @@
-# WTurbo Configuration File
+# wtb Configuration File
 # Git worktree management with Docker Compose environment isolation
 
 # Base branch for creating new worktrees

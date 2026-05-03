@@ -15,7 +15,7 @@ import { installClaudeSkill, resolveTargetDir } from "./claude-skill-install.js"
 
 function mkTempRepo(): string {
   // macOS returns /private/var/... via git rev-parse --show-toplevel, resolve upfront
-  const dir = realpathSync(mkdtempSync(path.join(os.tmpdir(), "wturbo-skill-test-")))
+  const dir = realpathSync(mkdtempSync(path.join(os.tmpdir(), "wtb-skill-test-")))
   execSync("git init -q", { cwd: dir })
   execSync('git config user.email "t@t.t"', { cwd: dir })
   execSync('git config user.name "t"', { cwd: dir })
@@ -26,23 +26,23 @@ function mkTempRepo(): string {
 }
 
 describe("resolveTargetDir", () => {
-  it("returns ~/.claude/skills/wturbo when --user", () => {
+  it("returns ~/.claude/skills/wtb when --user", () => {
     const target = resolveTargetDir({ user: true })
-    expect(target).toBe(path.join(os.homedir(), ".claude", "skills", "wturbo"))
+    expect(target).toBe(path.join(os.homedir(), ".claude", "skills", "wtb"))
   })
 
-  it("returns <gitRoot>/.claude/skills/wturbo when repo", () => {
+  it("returns <gitRoot>/.claude/skills/wtb when repo", () => {
     const repo = mkTempRepo()
     try {
       const target = resolveTargetDir({}, repo)
-      expect(target).toBe(path.join(repo, ".claude", "skills", "wturbo"))
+      expect(target).toBe(path.join(repo, ".claude", "skills", "wtb"))
     } finally {
       rmSync(repo, { recursive: true, force: true })
     }
   })
 
   it("throws when not a git repo and --user is not set", () => {
-    const nonRepo = mkdtempSync(path.join(os.tmpdir(), "wturbo-not-repo-"))
+    const nonRepo = mkdtempSync(path.join(os.tmpdir(), "wtb-not-repo-"))
     try {
       expect(() => resolveTargetDir({}, nonRepo)).toThrow(/Not in a git repository/)
     } finally {
@@ -65,13 +65,13 @@ describe("installClaudeSkill", () => {
     rmSync(repo, { recursive: true, force: true })
   })
 
-  it("writes SKILL.md to the repo .claude/skills/wturbo/", async () => {
+  it("writes SKILL.md to the repo .claude/skills/wtb/", async () => {
     const result = await installClaudeSkill({})
     expect(result.wrote).toBe(true)
     expect(result.existed).toBe(false)
     expect(existsSync(result.skillPath)).toBe(true)
     const content = readFileSync(result.skillPath, "utf-8")
-    expect(content).toMatch(/^---\nname: wturbo\b/m)
+    expect(content).toMatch(/^---\nname: wtb\b/m)
   })
 
   it("skips when SKILL.md exists and --force is not set", async () => {
@@ -89,7 +89,7 @@ describe("installClaudeSkill", () => {
     expect(second.wrote).toBe(true)
     const content = readFileSync(second.skillPath, "utf-8")
     expect(content).not.toBe("stale content")
-    expect(content).toMatch(/name: wturbo/)
+    expect(content).toMatch(/name: wtb/)
   })
 
   it("does not write when --dry-run", async () => {
@@ -99,7 +99,7 @@ describe("installClaudeSkill", () => {
   })
 
   it("refuses to overwrite a symlink at the target", async () => {
-    const targetDir = path.join(repo, ".claude", "skills", "wturbo")
+    const targetDir = path.join(repo, ".claude", "skills", "wtb")
     execSync(`mkdir -p ${targetDir}`)
     const symlinkTarget = path.join(repo, "external-target.md")
     writeFileSync(symlinkTarget, "evil", "utf-8")

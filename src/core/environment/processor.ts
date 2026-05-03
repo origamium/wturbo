@@ -295,9 +295,9 @@ export function copyAndAdjustEnvFile(
   for (const [key, value] of Object.entries(adjustments)) {
     if (!existingKeys.has(key) && value !== null && typeof value !== "function") {
       const strValue = typeof value === "number" ? value.toString() : (value as string)
-      const newEntry: EnvEntry = { key, value: strValue, comment: "Added by WTurbo" }
+      const newEntry: EnvEntry = { key, value: strValue, comment: "Added by wtb" }
       parsed.entries.push(newEntry)
-      parsed.lines.push({ type: "entry", key, value: strValue, comment: "Added by WTurbo" })
+      parsed.lines.push({ type: "entry", key, value: strValue, comment: "Added by wtb" })
       adjustedCount++
     }
   }

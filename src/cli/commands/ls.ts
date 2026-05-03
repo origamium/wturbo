@@ -1,5 +1,5 @@
 /**
- * @fileoverview `wturbo ls` コマンド実装
+ * @fileoverview `wtb ls` コマンド実装
  * Gitのworktree一覧をls風に表示する
  */
 

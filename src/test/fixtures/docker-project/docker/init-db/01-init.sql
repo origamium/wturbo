@@ -1,5 +1,5 @@
 -- =============================================================================
--- Initial Database Setup for WTurbo
+-- Initial Database Setup for wtb
 -- =============================================================================
 
 -- Create extension for UUID generation

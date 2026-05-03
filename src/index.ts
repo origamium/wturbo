@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * @fileoverview WTurbo CLI アプリケーションエントリーポイント
+ * @fileoverview wtb CLI アプリケーションエントリーポイント
  * 新しいディレクトリ構造に対応したメインエントリーポイント
  */
 

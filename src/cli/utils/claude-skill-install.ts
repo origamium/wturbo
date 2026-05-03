@@ -12,7 +12,7 @@ import { getGitRoot, isGitRepository } from "../../core/git/repository.js"
 export interface InstallOptions {
   /** 既存ファイルを上書き */
   force?: boolean
-  /** ~/.claude/skills/wturbo/ に配置 */
+  /** ~/.claude/skills/wtb/ に配置 */
   user?: boolean
   /** 書き込まずに対象パスだけ返す */
   dryRun?: boolean
@@ -43,23 +43,23 @@ function resolveTemplateRoot(): string {
 }
 
 function resolveTemplateSkillFile(): string {
-  return path.join(resolveTemplateRoot(), "claude", "skills", "wturbo", "SKILL.md")
+  return path.join(resolveTemplateRoot(), "claude", "skills", "wtb", "SKILL.md")
 }
 
 /**
  * インストール先ディレクトリを決定する
- * --user: ~/.claude/skills/wturbo
- * default: <gitRoot>/.claude/skills/wturbo
+ * --user: ~/.claude/skills/wtb
+ * default: <gitRoot>/.claude/skills/wtb
  */
 export function resolveTargetDir(opts: InstallOptions, cwd?: string): string {
   if (opts.user) {
-    return path.join(os.homedir(), ".claude", "skills", "wturbo")
+    return path.join(os.homedir(), ".claude", "skills", "wtb")
   }
   if (!isGitRepository(cwd)) {
     throw new Error("Not in a git repository (use --user to install globally)")
   }
   const root = getGitRoot(cwd)
-  return path.join(root, ".claude", "skills", "wturbo")
+  return path.join(root, ".claude", "skills", "wtb")
 }
 
 /**

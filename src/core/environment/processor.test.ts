@@ -22,7 +22,7 @@ import {
 let tmpDir: string
 
 beforeEach(() => {
-  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "wturbo-test-"))
+  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "wtb-test-"))
 })
 
 afterEach(() => {

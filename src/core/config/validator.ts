@@ -1,12 +1,12 @@
 /**
  * @fileoverview 設定バリデーター
- * WTurbo設定ファイルの検証と環境変数名の正規化を担当
+ * wtb設定ファイルの検証と環境変数名の正規化を担当
  */
 
 import { existsSync } from "node:fs"
 import * as path from "node:path"
 import { ENV_VAR_PATTERNS } from "../../constants/index.js"
-import type { WTurboConfig } from "../../types/index.js"
+import type { WtbConfig } from "../../types/index.js"
 
 /**
  * バリデーションエラー情報
@@ -18,14 +18,14 @@ interface ValidationError {
 }
 
 /**
- * WTurbo設定ファイルをバリデートする
+ * wtb設定ファイルをバリデートする
  * 警告は stderr に出力し、エラーは例外をスロー
  *
  * @param config - 検証する設定オブジェクト
  * @param configFile - 設定ファイルのパス（相対パス解決用）
  * @throws {Error} バリデーションエラーが発生した場合
  */
-export function validateConfig(config: WTurboConfig, configFile: string): void {
+export function validateConfig(config: WtbConfig, configFile: string): void {
   const errors: ValidationError[] = []
   const configDir = path.dirname(configFile)
 
@@ -219,7 +219,7 @@ export function suggestEnvVarName(name: string): string {
 /**
  * 設定オブジェクト内の環境変数名をすべて検証し、問題があれば修正案を提示
  */
-export function validateConfigEnvVars(config: WTurboConfig): Record<string, string> {
+export function validateConfigEnvVars(config: WtbConfig): Record<string, string> {
   const suggestions: Record<string, string> = {}
 
   if (config.env?.adjust) {

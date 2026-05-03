@@ -1,5 +1,5 @@
 /**
- * @fileoverview Comprehensive E2E Tests for WTurbo CLI
+ * @fileoverview Comprehensive E2E Tests for wtb CLI
  * Tests all CLI commands against multiple test projects
  */
 
@@ -48,7 +48,7 @@ describe("Help and Version Commands", () => {
       const result = testRepo.runCLI("--help")
 
       expect(result.exitCode).toBe(0)
-      expect(result.stdout).toContain("Usage: wturbo")
+      expect(result.stdout).toContain("Usage: wtb")
       expect(result.stdout).toContain("Git worktree management")
       expect(result.stdout).toContain("Commands:")
       expect(result.stdout).toContain("status")
@@ -907,7 +907,7 @@ describe("Create Command - link_files", () => {
   it("should skip non-existent paths in link_files", () => {
     const result = testRepo.runCLI("create test/skip-missing-links")
 
-    // Missing paths should be skipped (wturbo.yaml has shared-data and .env which exist,
+    // Missing paths should be skipped (wtb.yaml has shared-data and .env which exist,
     // so this test verifies that existing paths work and non-existent would be skipped)
     expect(result.exitCode).toBe(0)
     expect(result.combined).toContain("Worktree created successfully")
@@ -1264,14 +1264,14 @@ describe("init-claude command", () => {
     testRepo.cleanup()
   })
 
-  it("installs .claude/skills/wturbo/SKILL.md on first run", () => {
+  it("installs .claude/skills/wtb/SKILL.md on first run", () => {
     const result = testRepo.runCLI("init-claude")
     expect(result.exitCode).toBe(0)
-    expect(result.stdout).toContain("Installed wturbo Claude Code skill")
-    const skillPath = path.join(testRepo.path, ".claude/skills/wturbo/SKILL.md")
+    expect(result.stdout).toContain("Installed wtb Claude Code skill")
+    const skillPath = path.join(testRepo.path, ".claude/skills/wtb/SKILL.md")
     expect(existsSync(skillPath)).toBe(true)
     const content = fs.readFileSync(skillPath, "utf-8")
-    expect(content).toMatch(/name: wturbo/)
+    expect(content).toMatch(/name: wtb/)
   })
 
   it("skips when already installed without --force", () => {
@@ -1285,20 +1285,20 @@ describe("init-claude command", () => {
 
   it("overwrites with --force", () => {
     testRepo.runCLI("init-claude")
-    const skillPath = path.join(testRepo.path, ".claude/skills/wturbo/SKILL.md")
+    const skillPath = path.join(testRepo.path, ".claude/skills/wtb/SKILL.md")
     fs.writeFileSync(skillPath, "stale content", "utf-8")
     const result = testRepo.runCLI("init-claude --force")
     expect(result.exitCode).toBe(0)
     const content = fs.readFileSync(skillPath, "utf-8")
     expect(content).not.toBe("stale content")
-    expect(content).toMatch(/name: wturbo/)
+    expect(content).toMatch(/name: wtb/)
   })
 
   it("--dry-run prints targets without writing", () => {
     const result = testRepo.runCLI("init-claude --dry-run")
     expect(result.exitCode).toBe(0)
     expect(result.stdout).toContain("Dry run")
-    expect(existsSync(path.join(testRepo.path, ".claude/skills/wturbo/SKILL.md"))).toBe(false)
+    expect(existsSync(path.join(testRepo.path, ".claude/skills/wtb/SKILL.md"))).toBe(false)
   })
 })
 
@@ -1320,7 +1320,7 @@ describe("create command — init-claude tip", () => {
   it("prints the init-claude tip when skill is not installed", () => {
     const result = testRepo.runCLI("create feature/tip-1 --no-start --no-docker")
     expect(result.exitCode).toBe(0)
-    expect(result.stdout).toContain('Run "wturbo init-claude"')
+    expect(result.stdout).toContain('Run "wtb init-claude"')
   })
 
   it("suppresses the tip once the skill has been installed", () => {
@@ -1328,6 +1328,6 @@ describe("create command — init-claude tip", () => {
     expect(init.exitCode).toBe(0)
     const result = testRepo.runCLI("create feature/tip-2 --no-start --no-docker")
     expect(result.exitCode).toBe(0)
-    expect(result.stdout).not.toContain('Run "wturbo init-claude"')
+    expect(result.stdout).not.toContain('Run "wtb init-claude"')
   })
 })

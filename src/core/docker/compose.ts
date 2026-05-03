@@ -254,7 +254,7 @@ export function findComposeFile(projectDir: string): string | null {
  * ```
  */
 export function generateProjectName(projectDir: string, branchName?: string): string {
-  const baseName = projectDir.split("/").pop() || "wturbo-project"
+  const baseName = projectDir.split("/").pop() || "wtb-project"
   const cleanBaseName = baseName.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase()
 
   if (branchName) {

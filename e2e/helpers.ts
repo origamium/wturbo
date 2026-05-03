@@ -274,7 +274,7 @@ export function cleanupAllTestWorkspaces(): void {
  * Create a non-git directory for testing error cases
  */
 export function createNonGitDir(name: string): { path: string; cleanup: () => void } {
-  const dirPath = path.join("/tmp", `wturbo-e2e-nongit-${name}-${Date.now()}`)
+  const dirPath = path.join("/tmp", `wtb-e2e-nongit-${name}-${Date.now()}`)
   fs.ensureDirSync(dirPath)
 
   return {

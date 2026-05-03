@@ -1,6 +1,6 @@
 /**
  * @fileoverview Git commit information helpers
- * `wturbo ls -l` 用のworktree拡張情報取得
+ * `wtb ls -l` 用のworktree拡張情報取得
  */
 
 import type { EnrichedWorktreeInfo, WorktreeInfo } from "../../types/index.js"

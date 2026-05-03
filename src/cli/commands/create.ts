@@ -18,7 +18,7 @@ import {
 import { copyAndAdjustEnvFile, parseEnvFile } from "../../core/environment/processor.js"
 import { branchExists, getGitRoot, isGitRepository } from "../../core/git/repository.js"
 import { createWorktree, getWorktreePath, listWorktrees } from "../../core/git/worktree.js"
-import type { WTurboConfig } from "../../types/index.js"
+import type { WtbConfig } from "../../types/index.js"
 import { CLIError, getErrorMessage } from "../../utils/error.js"
 import { executeLifecycleCommand } from "../../utils/exec.js"
 
@@ -239,10 +239,10 @@ async function executeCreateCommand(
     }
 
     // Claude Code skill 未導入なら案内を 1 行だけ出す
-    if (!existsSync(path.join(gitRoot, ".claude", "skills", "wturbo"))) {
+    if (!existsSync(path.join(gitRoot, ".claude", "skills", "wtb"))) {
       console.log("")
       console.log(
-        '💡 Tip: Run "wturbo init-claude" to let Claude Code auto-detect this worktree\'s ports.'
+        '💡 Tip: Run "wtb init-claude" to let Claude Code auto-detect this worktree\'s ports.'
       )
     }
   }
@@ -367,7 +367,7 @@ async function executeStartCommand(command: string, worktreePath: string): Promi
 async function setupDockerCompose(
   gitRoot: string,
   worktreePath: string,
-  config: WTurboConfig
+  config: WtbConfig
 ): Promise<void> {
   if (!config.docker_compose_file) return
 
@@ -417,7 +417,7 @@ async function setupDockerCompose(
 function collectWorktreeEnvPorts(
   sourceRoot: string,
   targetRoot: string,
-  config: WTurboConfig
+  config: WtbConfig
 ): number[] {
   const adjustedKeys = new Set(
     Object.entries(config.env.adjust)
@@ -468,7 +468,7 @@ function collectWorktreeEnvPorts(
 async function applyEnvAdjustments(
   sourceRoot: string,
   targetRoot: string,
-  config: WTurboConfig
+  config: WtbConfig
 ): Promise<void> {
   // 他のworktreeで使用中のポートを収集（衝突防止）
   const usedPorts = collectWorktreeEnvPorts(sourceRoot, targetRoot, config)

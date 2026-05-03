@@ -1,6 +1,6 @@
 export const metadata = {
-  title: 'WTurbo Sample App',
-  description: 'Sample Next.js application for WTurbo testing',
+  title: 'wtb Sample App',
+  description: 'Sample Next.js application for wtb testing',
 }
 
 export default function RootLayout({

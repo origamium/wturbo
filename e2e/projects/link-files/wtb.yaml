@@ -1,4 +1,4 @@
-# Link Files Test WTurbo Configuration
+# Link Files Test wtb Configuration
 # Tests symlink creation for link_files and priority over copy_files
 
 base_branch: "main"

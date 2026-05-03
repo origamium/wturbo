@@ -1,5 +1,5 @@
 /**
- * @fileoverview `wturbo ports` 用 pure renderer
+ * @fileoverview `wtb ports` 用 pure renderer
  * 入力された WorktreePorts / WorktreePorts[] を JSON または人間可読テーブルに変換する
  */
 

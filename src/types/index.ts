@@ -1,6 +1,6 @@
 /**
  * @fileoverview 共通型定義
- * WTurbo CLI で使用されるすべての型定義を統合管理
+ * wtb CLI で使用されるすべての型定義を統合管理
  */
 
 // =============================================================================
@@ -18,9 +18,9 @@ export interface EnvConfig {
 }
 
 /**
- * WTurbo設定ファイルの型定義
+ * wtb設定ファイルの型定義
  */
-export interface WTurboConfig {
+export interface WtbConfig {
   /** ベースブランチ名 */
   base_branch: string
   /** Docker Composeファイルのパス */
@@ -62,7 +62,7 @@ export interface WorktreeInfo {
 }
 
 /**
- * 追加情報で拡張されたworktree情報（`wturbo ls -l` 用）
+ * 追加情報で拡張されたworktree情報（`wtb ls -l` 用）
  */
 export interface EnrichedWorktreeInfo extends WorktreeInfo {
   /** 短縮コミットハッシュ（7文字） */
@@ -100,7 +100,7 @@ export interface ComposeServicePorts {
 }
 
 /**
- * `wturbo ports` コマンドが返す 1 worktree の状態
+ * `wtb ports` コマンドが返す 1 worktree の状態
  */
 export interface WorktreePorts {
   /** worktreeのパス */
@@ -134,7 +134,7 @@ export interface PortsCommandOptions {
 export interface InitClaudeOptions {
   /** 既存ファイルを上書き */
   force?: boolean
-  /** ~/.claude/skills/wturbo/ にグローバル配置 */
+  /** ~/.claude/skills/wtb/ にグローバル配置 */
   user?: boolean
   /** 書き込まずに対象パスだけ出力 */
   dryRun?: boolean
@@ -239,7 +239,7 @@ export interface CommandContext {
   /** 現在の作業ディレクトリ */
   cwd: string
   /** 設定オブジェクト */
-  config: WTurboConfig
+  config: WtbConfig
   /** コマンドオプション */
   options: CommandOptions
 }

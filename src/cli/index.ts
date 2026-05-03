@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * @fileoverview WTurbo CLI メインエントリーポイント
+ * @fileoverview wtb CLI メインエントリーポイント
  * コマンドライン引数の解析とコマンド実行を担当
  */
 

@@ -1,6 +1,6 @@
 /**
  * @fileoverview アプリケーション定数
- * WTurbo CLI で使用される定数値を統合管理
+ * wtb CLI で使用される定数値を統合管理
  */
 
 import { createRequire } from "node:module"
@@ -14,7 +14,7 @@ const _pkg = _require("../../package.json") as any
 // =============================================================================
 
 /** アプリケーション名 */
-export const APP_NAME = "wturbo"
+export const APP_NAME = "wtb"
 
 /** アプリケーションバージョン（package.json から動的取得） */
 export const APP_VERSION: string = _pkg.version ?? "0.0.0"
@@ -28,12 +28,12 @@ export const APP_DESCRIPTION = "Git worktree management with Docker Compose envi
 
 /** 設定ファイル名の候補リスト（優先順位順） */
 export const CONFIG_FILE_NAMES = [
-  "wturbo.yaml",
-  "wturbo.yml",
-  ".wturbo.yaml",
-  ".wturbo.yml",
-  ".wturbo/config.yaml",
-  ".wturbo/config.yml",
+  "wtb.yaml",
+  "wtb.yml",
+  ".wtb.yaml",
+  ".wtb.yml",
+  ".wtb/config.yaml",
+  ".wtb/config.yml",
 ] as const
 
 /** デフォルト設定値 */
@@ -92,7 +92,7 @@ export const PORT_RANGE = {
 export const FILE_ENCODING = "utf-8" as const
 
 /** 一時ディレクトリ名 */
-export const TEMP_DIR_PREFIX = "wturbo-" as const
+export const TEMP_DIR_PREFIX = "wtb-" as const
 
 /** バックアップファイル拡張子 */
 export const BACKUP_EXTENSION = ".backup" as const
@@ -135,5 +135,5 @@ export const ENV_VAR_PATTERNS = {
   LEADING_TRAILING_UNDERSCORES: /^_+|_+$/g,
 } as const
 
-/** WTurboプロジェクト識別用の環境変数プレフィックス */
-export const WTURBO_PREFIX = "WTURBO_" as const
+/** wtbプロジェクト識別用の環境変数プレフィックス */
+export const WTB_PREFIX = "WTB_" as const

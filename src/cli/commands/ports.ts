@@ -1,5 +1,5 @@
 /**
- * @fileoverview `wturbo ports` コマンド実装
+ * @fileoverview `wtb ports` コマンド実装
  * 各worktreeの adjusted 済ポート値・compose サービスポート・推定エンドポイントを出力する
  */
 
@@ -19,7 +19,7 @@ import { listWorktrees } from "../../core/git/worktree.js"
 import type {
   ComposeServicePorts,
   PortsCommandOptions,
-  WTurboConfig,
+  WtbConfig,
   WorktreeInfo,
   WorktreePorts,
 } from "../../types/index.js"
@@ -111,7 +111,7 @@ function pickCurrentWorktree(
 export function gatherPortsForWorktree(
   wt: WorktreeInfo,
   gitRoot: string,
-  config: WTurboConfig
+  config: WtbConfig
 ): WorktreePorts {
   const worktreePath = path.resolve(wt.path)
 
@@ -130,7 +130,7 @@ export function gatherPortsForWorktree(
 
 function collectEnvValues(
   worktreePath: string,
-  config: WTurboConfig
+  config: WtbConfig
 ): Record<string, string> {
   const adjustKeys = new Set(Object.keys(config.env.adjust ?? {}))
   const out: Record<string, string> = {}
@@ -155,7 +155,7 @@ function collectEnvValues(
 function collectComposeServices(
   worktreePath: string,
   gitRoot: string,
-  config: WTurboConfig
+  config: WtbConfig
 ): WorktreePorts["compose"] {
   const composePath = resolveComposePath(worktreePath, gitRoot, config)
   if (!composePath) {
@@ -195,7 +195,7 @@ function collectComposeServices(
 function resolveComposePath(
   worktreePath: string,
   gitRoot: string,
-  config: WTurboConfig
+  config: WtbConfig
 ): string | null {
   if (config.docker_compose_file) {
     // docker_compose_file は config(=gitRoot)基準の相対パス。

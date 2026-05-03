@@ -1,4 +1,4 @@
-# Env Adjust Test WTurbo Configuration
+# Env Adjust Test wtb Configuration
 # Tests env.file + env.adjust functionality
 
 base_branch: "main"

@@ -1,4 +1,4 @@
-# Edge Cases WTurbo Configuration
+# Edge Cases wtb Configuration
 # Testing unusual scenarios and edge cases
 
 base_branch: "main"

@@ -5,7 +5,7 @@
 
 import { existsSync } from "node:fs"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import type { WTurboConfig } from "../../types/index.js"
+import type { WtbConfig } from "../../types/index.js"
 import { suggestEnvVarName, validateConfig, validateEnvVarName } from "./validator.js"
 
 // Mock dependencies
@@ -19,7 +19,7 @@ describe("Config Validator (Refactored)", () => {
   })
 
   describe("validateConfig", () => {
-    const configFile = "/test/wturbo.yaml"
+    const configFile = "/test/wtb.yaml"
 
     beforeEach(() => {
       // Default mock behavior
@@ -27,7 +27,7 @@ describe("Config Validator (Refactored)", () => {
     })
 
     it("should validate a complete valid configuration", () => {
-      const validConfig: WTurboConfig = {
+      const validConfig: WtbConfig = {
         base_branch: "main",
         docker_compose_file: "./docker-compose.yaml",
         copy_files: [".env", ".claude"],
@@ -52,7 +52,7 @@ describe("Config Validator (Refactored)", () => {
         copy_files: [],
         link_files: [42],
         env: { file: ["./.env"], adjust: {} },
-      } as unknown as WTurboConfig
+      } as unknown as WtbConfig
 
       expect(() => validateConfig(invalidConfig, configFile)).toThrow(
         "link_files[0] must be a string"
@@ -65,7 +65,7 @@ describe("Config Validator (Refactored)", () => {
         copy_files: [],
         link_files: [],
         env: { file: ["./.env"], adjust: {} },
-      } as unknown as WTurboConfig
+      } as unknown as WtbConfig
 
       expect(() => validateConfig(invalidConfig, configFile)).toThrow(
         "base_branch must be a non-empty string"
@@ -73,7 +73,7 @@ describe("Config Validator (Refactored)", () => {
     })
 
     it("should not error or warn when docker_compose_file is empty string", () => {
-      const configNoDocker: WTurboConfig = {
+      const configNoDocker: WtbConfig = {
         base_branch: "main",
         docker_compose_file: "",
         copy_files: [],
@@ -92,7 +92,7 @@ describe("Config Validator (Refactored)", () => {
         return !path.toString().includes("docker-compose.yaml")
       })
 
-      const invalidConfig: WTurboConfig = {
+      const invalidConfig: WtbConfig = {
         base_branch: "main",
         docker_compose_file: "./docker-compose.yaml",
         copy_files: [],

@@ -1,4 +1,4 @@
-# Basic WTurbo Configuration
+# Basic wtb Configuration
 # Minimal setup for testing core worktree operations
 
 base_branch: "main"

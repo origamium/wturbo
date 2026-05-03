@@ -1,6 +1,6 @@
 /**
  * @fileoverview 設定ファイルローダー
- * WTurbo設定ファイルの検索、読み込み、デフォルト値とのマージを担当
+ * wtb設定ファイルの検索、読み込み、デフォルト値とのマージを担当
  */
 
 import { existsSync } from "node:fs"
@@ -8,7 +8,7 @@ import * as path from "node:path"
 import fs from "fs-extra"
 import { parse } from "yaml"
 import { CONFIG_FILE_NAMES, DEFAULT_CONFIG } from "../../constants/index.js"
-import type { WTurboConfig } from "../../types/index.js"
+import type { WtbConfig } from "../../types/index.js"
 import { validateConfig } from "./validator.js"
 
 /**
@@ -51,7 +51,7 @@ export function hasConfigFile(startDir: string = process.cwd()): boolean {
  * 部分設定をデフォルト設定とマージ
  * `||` ではなく `??` を使用して falsy 値（空配列・空文字等）を正しく扱う
  */
-export function mergeWithDefaults(partial: Partial<WTurboConfig>): WTurboConfig {
+export function mergeWithDefaults(partial: Partial<WtbConfig>): WtbConfig {
   return {
     base_branch: partial.base_branch ?? DEFAULT_CONFIG.base_branch,
     docker_compose_file: partial.docker_compose_file ?? DEFAULT_CONFIG.docker_compose_file,
@@ -69,11 +69,11 @@ export function mergeWithDefaults(partial: Partial<WTurboConfig>): WTurboConfig 
 /**
  * デフォルト設定ファイルを作成
  */
-export function createDefaultConfig(configPath?: string): WTurboConfig {
+export function createDefaultConfig(configPath?: string): WtbConfig {
   const targetPath = configPath || getConfigFilePath()
   const defaultConfig = mergeWithDefaults({})
 
-  const yamlContent = `# WTurbo Configuration File
+  const yamlContent = `# wtb Configuration File
 # Git worktree management with Docker Compose environment isolation
 
 # Base branch for creating new worktrees
@@ -134,11 +134,11 @@ env:
  * @returns 設定オブジェクト
  * @throws {Error} 設定ファイルの読み込み・パース・バリデーションに失敗した場合
  */
-export function loadConfig(configDir: string = process.cwd()): WTurboConfig {
+export function loadConfig(configDir: string = process.cwd()): WtbConfig {
   const configResult = findConfigFile(configDir)
 
   if (!configResult.exists) {
-    process.stderr.write("⚠️  No wturbo.yaml found, using default configuration\n")
+    process.stderr.write("⚠️  No wtb.yaml found, using default configuration\n")
     return mergeWithDefaults({})
   }
 
@@ -147,7 +147,7 @@ export function loadConfig(configDir: string = process.cwd()): WTurboConfig {
     // informational only — write to stderr so stdout-oriented commands (ports --json, ls --json) stay clean
     process.stderr.write(`📋 Loading configuration from: ${path.basename(configPath)}\n`)
     const content = fs.readFileSync(configPath, "utf-8")
-    const parsed = parse(content) as Partial<WTurboConfig>
+    const parsed = parse(content) as Partial<WtbConfig>
 
     const config = mergeWithDefaults(parsed)
 

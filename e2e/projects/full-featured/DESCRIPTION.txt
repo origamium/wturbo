@@ -1,1 +1,1 @@
-Full-featured project with all WTurbo features enabled
+Full-featured project with all wtb features enabled

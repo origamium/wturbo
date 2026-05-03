@@ -1,7 +1,7 @@
 #!/bin/bash
 # Health check script for the sample application
 
-echo "=== WTurbo Sample Application Health Check ==="
+echo "=== wtb Sample Application Health Check ==="
 echo ""
 
 # Check PostgreSQL
