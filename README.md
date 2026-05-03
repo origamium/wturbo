@@ -35,6 +35,7 @@ A CLI tool built on Git worktrees that gives every branch its own isolated worki
 - [Claude Code integration](#claude-code-integration)
 - [Troubleshooting](#troubleshooting)
 - [FAQ](#faq)
+- [Changelog](#changelog)
 - [License](#license)
 
 ## Why wtb?
@@ -377,8 +378,8 @@ Script failures are **non-fatal** — wtb prints a warning and the worktree is l
 ```
 src/
 ├── cli/
-│   ├── commands/      create, remove, ls, status
-│   ├── utils/         ls renderers, progress helpers
+│   ├── commands/      create, remove, ls, ports, status, init-claude
+│   ├── utils/         worktree/ports renderers, command error wrapper, claude skill installer
 │   └── index.ts       commander wiring + global error handlers
 ├── core/
 │   ├── config/        YAML loader + validator + defaults merge
@@ -390,6 +391,8 @@ src/
 ├── constants/         defaults, command templates, regex, exit codes
 └── index.ts           library entry point
 ```
+
+For full module-by-module API surface and design rationale, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 Key design choices:
 
@@ -564,6 +567,10 @@ Yes — but lifecycle scripts, Docker integration, and port remapping are mostly
 **Why the "wtb" name?**
 Short for "worktree turbo" — git worktrees, but with the environment-wrangling turbocharged.
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for release notes.
+
 ## License
 
-MIT
+[MIT](LICENSE) © ONOUE Origami
