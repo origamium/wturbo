@@ -462,10 +462,12 @@ function previewVolumeCopy(gitRoot: string, config: WtbConfig): void {
  *
  * - external な volume はスキップ (共有意図)
  * - config.volumes.exclude に含まれる key はスキップ
- * - source volume が存在しない、稼働中コンテナが使用中、target が既に populated
- *   の場合は警告してスキップ (force=true で強行可能)
+ * - source volume が存在しない、稼働中コンテナが使用中、target が既にデータ保持中
+ *   の場合は警告してスキップ (force=true で強行可能。target 側はクリア後コピー)
+ *
+ * @internal exported for unit testing
  */
-async function setupVolumeCopy(
+export async function setupVolumeCopy(
   gitRoot: string,
   worktreePath: string,
   config: WtbConfig,
@@ -534,20 +536,28 @@ async function setupVolumeCopy(
     }
 
     // target に既にデータが入っているかチェック (空の volume ならコピーで上書き OK)
+    let targetHadData = false
     if (volumeExists(target.name)) {
       const targetSize = getVolumeSize(target.name)
-      if (targetSize > 0 && !options.force) {
-        console.log(
-          `  ⚠️  ${key}: target volume '${target.name}' already has data — skipping (use --force-volume-copy to overwrite)`
-        )
-        skippedCount++
-        continue
+      if (targetSize > 0) {
+        if (!options.force) {
+          console.log(
+            `  ⚠️  ${key}: target volume '${target.name}' already has data — skipping (use --force-volume-copy to overwrite)`
+          )
+          skippedCount++
+          continue
+        }
+        // force=true: target に古いファイルが残ったままにならないよう、コピー前に
+        // target を消去する (rsync は --delete、cp は find -delete でこの semantics
+        // を実現)。これがないと cp フォールバック時に "上書き" の約束が破れる。
+        targetHadData = true
       }
     }
 
     try {
       await copyVolume(source.name, target.name, {
         onProgress: createVolumeCopyProgressHandler(`  📦 ${key}`),
+        clearTarget: targetHadData,
       })
       console.log(`  ✅ Cloned ${source.name} → ${target.name}`)
       copiedCount++

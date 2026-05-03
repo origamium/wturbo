@@ -20,7 +20,6 @@ export interface VolumeCopyProgress {
   totalBytes: number
   speed: number
   eta: number
-  currentFile?: string
 }
 
 /**
@@ -28,21 +27,10 @@ export interface VolumeCopyProgress {
  */
 export interface VolumeCopyOptions {
   onProgress?: (progress: VolumeCopyProgress) => void
+  /** rsync `--delete` 相当を有効化(target の余剰ファイルを消す) */
   incremental?: boolean
+  /** rsync `-z` 相当(cp フォールバックでは無視) */
   compress?: boolean
-  deleteSource?: boolean
-  parallelWorkers?: number
-}
-
-/**
- * ボリューム情報
- */
-export interface VolumeDetails {
-  name: string
-  driver: string
-  mountpoint: string
-  size: number
-  createdAt: string
 }
 
 /**
@@ -73,34 +61,6 @@ export function getVolumeSize(volumeName: string): number {
 }
 
 /**
- * ボリュームの詳細情報を取得
- *
- * @param volumeName - ボリューム名
- * @returns ボリューム詳細情報
- */
-export function getVolumeDetails(volumeName: string): VolumeDetails | null {
-  try {
-    const output = execDockerSafe(
-      [
-        "volume",
-        "inspect",
-        volumeName,
-        "--format",
-        "{{.Name}}\t{{.Driver}}\t{{.Mountpoint}}\t{{.CreatedAt}}",
-      ],
-      {}
-    )
-
-    const [name, driver, mountpoint, createdAt] = output.split("\t")
-    const size = getVolumeSize(volumeName)
-
-    return { name, driver, mountpoint, size, createdAt }
-  } catch {
-    return null
-  }
-}
-
-/**
  * ボリュームを作成
  *
  * @param volumeName - 作成するボリューム名
@@ -108,17 +68,6 @@ export function getVolumeDetails(volumeName: string): VolumeDetails | null {
  */
 export function createVolume(volumeName: string, driver: string = "local"): void {
   execDockerSafe(["volume", "create", "--driver", driver, volumeName], {})
-}
-
-/**
- * ボリュームを削除
- *
- * @param volumeName - 削除するボリューム名
- * @param force - 強制削除
- */
-export function removeVolume(volumeName: string, force: boolean = false): void {
-  const args = force ? ["volume", "rm", "-f", volumeName] : ["volume", "rm", volumeName]
-  execDockerSafe(args, {})
 }
 
 /**
@@ -255,13 +204,22 @@ export async function copyVolumeWithRsync(
  *
  * @param sourceVolume - コピー元ボリューム名
  * @param targetVolume - コピー先ボリューム名
- * @param onProgress - 進捗コールバック
+ * @param options - コピー設定 (onProgress, clearTarget)
+ *
+ * `clearTarget: true` を指定すると、コピー前に target volume の中身を全削除する
+ * (rsync の `--delete` 相当)。`--force-volume-copy` 経由で呼ばれた際の上書き
+ * セマンティクスを保つために必要。デフォルトは false (既存ファイル保持) で、
+ * これは rsync の非 incremental 動作と等価。
  */
 export async function copyVolumeWithCp(
   sourceVolume: string,
   targetVolume: string,
-  onProgress?: (progress: VolumeCopyProgress) => void
+  options: {
+    onProgress?: (progress: VolumeCopyProgress) => void
+    clearTarget?: boolean
+  } = {}
 ): Promise<void> {
+  const { onProgress, clearTarget = false } = options
   try {
     createVolume(targetVolume)
   } catch {
@@ -280,6 +238,24 @@ export async function copyVolumeWithCp(
       speed: 0,
       eta: 0,
     })
+  }
+
+  // force 時は target の既存ファイルを先に消す。
+  // `cp -a /source/. /target/` 単体では target の余分なファイルが残るため。
+  if (clearTarget) {
+    execDockerSafe(
+      [
+        "run",
+        "--rm",
+        "-v",
+        `${targetVolume}:/target`,
+        "alpine",
+        "sh",
+        "-c",
+        "find /target -mindepth 1 -delete",
+      ],
+      {}
+    )
   }
 
   execDockerSafe(
@@ -317,38 +293,28 @@ export async function copyVolumeWithCp(
  *
  * @param sourceVolume - コピー元ボリューム名
  * @param targetVolume - コピー先ボリューム名
- * @param options - コピーオプション
+ * @param options - コピーオプション。`clearTarget: true` で rsync 失敗時の cp
+ *   フォールバックでも target 上書き保証 (rsync は incremental: true で `--delete`、
+ *   cp 側はこのオプションを `find ... -delete` に翻訳して再現する)
  * @returns コピー結果のPromise
  */
 export async function copyVolume(
   sourceVolume: string,
   targetVolume: string,
-  options: VolumeCopyOptions = {}
+  options: VolumeCopyOptions & { clearTarget?: boolean } = {}
 ): Promise<void> {
   try {
-    await copyVolumeWithRsync(sourceVolume, targetVolume, options)
+    await copyVolumeWithRsync(sourceVolume, targetVolume, {
+      ...options,
+      // clearTarget=true のとき rsync は incremental(=delete) で動かす
+      incremental: options.clearTarget ?? options.incremental,
+    })
   } catch (error) {
     console.warn("rsync copy failed, falling back to cp:", error)
-    await copyVolumeWithCp(sourceVolume, targetVolume, options.onProgress)
-  }
-}
-
-/**
- * 複数のボリュームを並列でコピー
- *
- * @param volumePairs - コピーするボリュームのペア配列
- * @param options - コピーオプション
- * @returns コピー結果のPromise
- */
-export async function copyVolumesParallel(
-  volumePairs: Array<{ source: string; target: string }>,
-  options: VolumeCopyOptions = {}
-): Promise<void> {
-  const { parallelWorkers = 2, ...copyOptions } = options
-
-  for (let i = 0; i < volumePairs.length; i += parallelWorkers) {
-    const batch = volumePairs.slice(i, i + parallelWorkers)
-    await Promise.all(batch.map((pair) => copyVolume(pair.source, pair.target, copyOptions)))
+    await copyVolumeWithCp(sourceVolume, targetVolume, {
+      onProgress: options.onProgress,
+      clearTarget: options.clearTarget,
+    })
   }
 }
 
@@ -398,7 +364,8 @@ export interface ResolvedVolume {
  * Compose ファイル内の volume key から、実 Docker volume 名を解決する
  *
  * 規則 (compose-spec v2 準拠):
- * - `volumes.<key>.external: true` で `name` 未指定 → null (名前不定なのでクローン対象外)
+ * - `volumes.<key>.external: true` で `name` 未指定 → `{ name: <key>, external: true }`
+ *   (compose-spec: external で名前未指定なら key 自体が外部 volume 名)
  * - `volumes.<key>.external: { name: "foo" }` → `{ name: "foo", external: true }`
  * - `volumes.<key>.external: true` + `volumes.<key>.name: "foo"` → `{ name: "foo", external: true }`
  * - `volumes.<key>.name: "foo"` (external なし) → `{ name: "foo", external: false }`
