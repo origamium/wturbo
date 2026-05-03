@@ -102,6 +102,31 @@ env:
       expect(config.docker_compose_file).toBe("") // default: no Docker
       expect(config.env.file).toEqual(["./.env"]) // default
     })
+
+    it("should default volumes.exclude to empty array when not specified", () => {
+      vi.mocked(existsSync).mockReturnValue(true)
+      vi.mocked(fs.readFileSync).mockReturnValue("base_branch: main")
+      vi.mocked(parse).mockReturnValue({ base_branch: "main" })
+
+      const config = loadConfig(testRepoPath)
+
+      expect(config.volumes).toEqual({ exclude: [] })
+    })
+
+    it("should preserve user volumes.exclude through mergeWithDefaults", () => {
+      // Regression test: previously `mergeWithDefaults` dropped the
+      // `volumes` field, silently breaking the documented opt-out path.
+      vi.mocked(existsSync).mockReturnValue(true)
+      vi.mocked(fs.readFileSync).mockReturnValue("…")
+      vi.mocked(parse).mockReturnValue({
+        base_branch: "main",
+        volumes: { exclude: ["cache_data", "tmp_data"] },
+      })
+
+      const config = loadConfig(testRepoPath)
+
+      expect(config.volumes?.exclude).toEqual(["cache_data", "tmp_data"])
+    })
   })
 
   describe("findConfigFile", () => {

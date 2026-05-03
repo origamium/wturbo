@@ -63,6 +63,9 @@ export function mergeWithDefaults(partial: Partial<WtbConfig>): WtbConfig {
       file: partial.env?.file ?? [...DEFAULT_CONFIG.env.file],
       adjust: partial.env?.adjust ?? { ...DEFAULT_CONFIG.env.adjust },
     },
+    volumes: {
+      exclude: partial.volumes?.exclude ?? [...DEFAULT_CONFIG.volumes.exclude],
+    },
   }
 }
 
