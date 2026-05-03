@@ -1,4 +1,4 @@
-# WTurbo CLI Architecture
+# wtb CLI Architecture
 
 ## 📁 ディレクトリ構造
 
@@ -94,9 +94,9 @@ export function statusCommand(): Command
 #### Config (`src/core/config/`)
 ```typescript
 // 設定ファイル管理
-export function loadConfig(configDir?: string): WTurboConfig
-export function validateConfig(config: WTurboConfig, configFile: string): void
-export function createDefaultConfig(configPath?: string): WTurboConfig
+export function loadConfig(configDir?: string): WtbConfig
+export function validateConfig(config: WtbConfig, configFile: string): void
+export function createDefaultConfig(configPath?: string): WtbConfig
 ```
 
 #### Git (`src/core/git/`)
@@ -152,7 +152,7 @@ export function writeFileEnsureDir(filePath: string, content: string, options?: 
 
 ```typescript
 // 設定関連
-export interface WTurboConfig
+export interface WtbConfig
 export interface EnvConfig
 
 // Git関連
@@ -174,11 +174,11 @@ export interface CommandContext
 
 ```typescript
 // アプリケーション定数
-export const APP_NAME = 'wturbo'
+export const APP_NAME = 'wtb'
 export const APP_VERSION = '1.0.0'
 
 // 設定ファイル
-export const CONFIG_FILE_NAMES = ['wturbo.yaml', 'wturbo.yml', ...] as const
+export const CONFIG_FILE_NAMES = ['wtb.yaml', 'wtb.yml', ...] as const
 
 // Docker設定
 export const DOCKER_COMMANDS = { ... } as const
@@ -251,4 +251,4 @@ export const GIT_COMMANDS = { ... } as const
 4. **設定スキーマ**: JSON Schema による設定ファイル検証
 5. **Docker Swarm対応**: 新しいオーケストレーション機能
 
-この新しいアーキテクチャにより、WTurbo CLIはより保守しやすく、拡張しやすく、テストしやすいコードベースとなりました。
+この新しいアーキテクチャにより、wtb CLIはより保守しやすく、拡張しやすく、テストしやすいコードベースとなりました。

@@ -1,4 +1,4 @@
-# WTurbo Architecture
+# wtb Architecture
 
 ## レイヤー構成
 
@@ -22,7 +22,7 @@
 ## 主要モジュール
 
 ### src/types/index.ts
-- `WTurboConfig` - 設定ファイルの型
+- `WtbConfig` - 設定ファイルの型
 - `EnvConfig` - 環境変数設定の型
 - `WorktreeInfo` - worktree情報の型
 - `ContainerInfo` - Dockerコンテナ情報の型
@@ -85,7 +85,7 @@
 6. removeWorktree() でworktree削除
 ```
 
-## 設定ファイル (wturbo.yaml) 構造
+## 設定ファイル (wtb.yaml) 構造
 
 ```yaml
 base_branch: string           # ベースブランチ名

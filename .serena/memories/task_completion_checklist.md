@@ -1,4 +1,4 @@
-# Task Completion Checklist for WTurbo
+# Task Completion Checklist for wtb
 
 ## Before Committing Changes
 
@@ -52,7 +52,7 @@ cd sample
 - README.md のコマンド説明を更新
 
 ### 設定項目を追加した場合
-1. types/index.ts - WTurboConfig に型追加
+1. types/index.ts - WtbConfig に型追加
 2. constants/index.ts - DEFAULT_CONFIG にデフォルト値追加
 3. core/config/loader.ts - mergeWithDefaults 更新
 4. core/config/validator.ts - バリデーション追加

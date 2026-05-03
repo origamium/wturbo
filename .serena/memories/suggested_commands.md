@@ -1,4 +1,4 @@
-# Suggested Commands for WTurbo Development
+# Suggested Commands for wtb Development
 
 ## Development Commands
 ```bash
@@ -30,9 +30,9 @@ node dist/index.js remove feature/xxx
 node dist/index.js status
 
 # グローバルインストール後
-wturbo create feature/xxx
-wturbo remove feature/xxx
-wturbo status
+wtb create feature/xxx
+wtb remove feature/xxx
+wtb status
 ```
 
 ## Sample Project

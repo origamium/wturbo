@@ -1,7 +1,7 @@
-# WTurbo Project Overview
+# wtb Project Overview
 
 ## Project Purpose
-WTurbo (旧称: WTCompose) は、Git worktreeとDocker Compose環境を統合管理するTypeScript CLIツールです。
+wtb (旧称: WTCompose) は、Git worktreeとDocker Compose環境を統合管理するTypeScript CLIツールです。
 
 ### 主な機能
 - **worktree作成** - ブランチごとに独立した開発環境を作成
@@ -26,7 +26,7 @@ wtcompose/
 ├── src/
 │   ├── index.ts              # メインエントリーポイント
 │   ├── types/                # 型定義
-│   │   └── index.ts          # WTurboConfig, ContainerInfo等
+│   │   └── index.ts          # WtbConfig, ContainerInfo等
 │   ├── constants/            # 定数定義
 │   │   └── index.ts          # DEFAULT_CONFIG, EXIT_CODES等
 │   ├── core/                 # コアビジネスロジック
@@ -56,7 +56,7 @@ wtcompose/
 │       └── fixtures/
 ├── sample/                   # サンプルプロジェクト
 │   ├── docker-compose.yml    # PostgreSQL + Next.js + Debian
-│   ├── wturbo.yaml           # 設定例
+│   ├── wtb.yaml           # 設定例
 │   ├── start-dev.sh          # 起動スクリプト
 │   ├── stop-dev.sh           # 停止スクリプト
 │   └── next-app/             # Next.jsアプリ
@@ -67,7 +67,7 @@ wtcompose/
 
 ```
 
-## Configuration (wturbo.yaml)
+## Configuration (wtb.yaml)
 ```yaml
 base_branch: main
 docker_compose_file: ./docker-compose.yml
@@ -86,6 +86,6 @@ env:
 ```
 
 ## CLI Commands
-- `wturbo create <branch>` - worktree作成
-- `wturbo remove <branch>` - worktree削除
-- `wturbo status` - ステータス表示
+- `wtb create <branch>` - worktree作成
+- `wtb remove <branch>` - worktree削除
+- `wtb status` - ステータス表示
