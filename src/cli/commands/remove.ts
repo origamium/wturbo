@@ -19,6 +19,7 @@ interface RemoveOptions {
   force?: boolean
   docker?: boolean
   end?: boolean
+  removeVolumes?: boolean
 }
 
 /**
@@ -31,6 +32,10 @@ export function removeCommand(): Command {
     .option("-f, --force", "Force removal even if worktree has uncommitted changes")
     .option("--no-docker", "Skip Docker Compose teardown")
     .option("--no-end", "Skip end_command execution")
+    .option(
+      "--remove-volumes",
+      "Also delete this worktree's Docker volumes (docker compose down -v)",
+    )
     .action(withErrorHandling(executeRemoveCommand))
 }
 
@@ -69,6 +74,7 @@ async function executeRemoveCommand(branch: string, options: RemoveOptions): Pro
 
   const skipDocker = options.docker === false
   const skipEnd = options.end === false
+  const removeVolumes = options.removeVolumes === true
 
   // Docker Compose teardown
   // - Only if compose file is actually configured (avoid path.resolve("") → worktree root bug)
@@ -81,8 +87,12 @@ async function executeRemoveCommand(branch: string, options: RemoveOptions): Pro
       const worktreeComposePath = path.resolve(worktreePath, config.docker_compose_file)
       if (existsSync(worktreeComposePath)) {
         console.log("")
-        console.log("🐳 Stopping Docker Compose services...")
-        await runDockerComposeDown(worktreePath)
+        if (removeVolumes) {
+          console.log("🐳 Stopping Docker Compose services and removing volumes...")
+        } else {
+          console.log("🐳 Stopping Docker Compose services...")
+        }
+        await runDockerComposeDown(worktreePath, removeVolumes)
       }
     }
   }
@@ -123,15 +133,26 @@ async function executeRemoveCommand(branch: string, options: RemoveOptions): Pro
 /**
  * worktreeディレクトリで docker compose down を実行
  * Docker が利用できない場合は警告のみ（削除処理は継続）
+ *
+ * @param worktreePath - worktree のパス
+ * @param removeVolumes - true なら `down -v` で named volume も削除
  */
-async function runDockerComposeDown(worktreePath: string): Promise<void> {
+async function runDockerComposeDown(
+  worktreePath: string,
+  removeVolumes: boolean = false,
+): Promise<void> {
   try {
-    execSync("docker compose down", {
+    const cmd = removeVolumes ? "docker compose down -v" : "docker compose down"
+    execSync(cmd, {
       cwd: worktreePath,
       stdio: "inherit",
       shell: "/bin/sh",
     })
-    console.log("  ✅ Docker Compose services stopped")
+    console.log(
+      removeVolumes
+        ? "  ✅ Docker Compose services stopped and volumes removed"
+        : "  ✅ Docker Compose services stopped"
+    )
   } catch (error) {
     console.log(`  ⚠️  Docker Compose down skipped: ${getErrorMessage(error)}`)
     console.log("  (Continuing with worktree removal)")

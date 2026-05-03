@@ -12,9 +12,17 @@ import { loadConfig } from "../../core/config/loader.js"
 import { getUsedPorts } from "../../core/docker/client.js"
 import {
   adjustPortsInCompose,
+  generateProjectName,
   readComposeFile,
   writeComposeFile,
 } from "../../core/docker/compose.js"
+import {
+  copyVolume,
+  discoverCloneableVolumes,
+  getContainersUsingVolume,
+  resolveVolumeName,
+  volumeExists,
+} from "../../core/docker/volume.js"
 import { copyAndAdjustEnvFile, parseEnvFile } from "../../core/environment/processor.js"
 import { branchExists, getGitRootOrThrow } from "../../core/git/repository.js"
 import { createWorktree, getWorktreePath, listWorktrees } from "../../core/git/worktree.js"
@@ -22,6 +30,7 @@ import type { WtbConfig } from "../../types/index.js"
 import { CLIError, getErrorMessage } from "../../utils/error.js"
 import { executeLifecycleCommand } from "../../utils/exec.js"
 import { withErrorHandling } from "../utils/command-helpers.js"
+import { createVolumeCopyProgressHandler } from "../utils/progress.js"
 
 interface CreateOptions {
   path?: string
@@ -31,6 +40,8 @@ interface CreateOptions {
   copy?: boolean
   link?: boolean
   start?: boolean
+  volumeCopy?: boolean
+  forceVolumeCopy?: boolean
   dryRun?: boolean
 }
 
@@ -48,6 +59,11 @@ export function createCommand(): Command {
     .option("--no-copy", "Skip file copying")
     .option("--no-link", "Skip symlink creation")
     .option("--no-start", "Skip start_command execution")
+    .option("--no-volume-copy", "Skip cloning Docker volumes from the source project")
+    .option(
+      "--force-volume-copy",
+      "Clone volumes even when the source container is running or the target volume already has data",
+    )
     .option("--dry-run", "Show what would be done without making changes")
     .action(withErrorHandling(executeCreateCommand))
 }
@@ -83,6 +99,8 @@ async function executeCreateCommand(
   const skipCopy = options.copy === false
   const skipLink = options.link === false
   const skipStart = options.start === false
+  const skipVolumeCopy = options.volumeCopy === false
+  const forceVolumeCopy = options.forceVolumeCopy === true
   const dryRun = options.dryRun === true
 
   if (dryRun) {
@@ -188,6 +206,19 @@ async function executeCreateCommand(
       }
     } else {
       await setupDockerCompose(gitRoot, worktreePath, config)
+    }
+  }
+
+  // Volume clone phase (named volumes from compose are auto-cloned to the new
+  // worktree's project so e.g. PostgreSQL data carries over).
+  if (config.docker_compose_file && !skipDocker) {
+    console.log("")
+    if (skipVolumeCopy) {
+      console.log("⏭️  Skipping volume clone (--no-volume-copy)")
+    } else if (dryRun) {
+      console.log("📦 Would clone Docker volumes (auto-discovered from compose)")
+    } else {
+      await setupVolumeCopy(gitRoot, worktreePath, config, { force: forceVolumeCopy })
     }
   }
 
@@ -393,6 +424,102 @@ async function setupDockerCompose(
   } catch (error) {
     console.log(`  ⚠️  Docker Compose setup skipped: ${getErrorMessage(error)}`)
   }
+}
+
+/**
+ * Compose の volumes セクションに定義された named volume を、source project から
+ * target project (新 worktree) へ自動コピーする。
+ *
+ * - external な volume はスキップ (共有意図)
+ * - config.volumes.exclude に含まれる key はスキップ
+ * - source volume が存在しない、稼働中コンテナが使用中、target が既に populated
+ *   の場合は警告してスキップ (force=true で強行可能)
+ */
+async function setupVolumeCopy(
+  gitRoot: string,
+  worktreePath: string,
+  config: WtbConfig,
+  options: { force?: boolean }
+): Promise<void> {
+  if (!config.docker_compose_file) return
+
+  const sourceComposePath = path.resolve(gitRoot, config.docker_compose_file)
+  if (!existsSync(sourceComposePath)) return
+
+  let composeConfig: ReturnType<typeof readComposeFile>
+  try {
+    composeConfig = readComposeFile(sourceComposePath)
+  } catch (error) {
+    console.log(`📦 Volume clone skipped: cannot read compose file (${getErrorMessage(error)})`)
+    return
+  }
+
+  const exclude = config.volumes?.exclude ?? []
+  const cloneable = discoverCloneableVolumes(composeConfig, exclude)
+  if (cloneable.length === 0) {
+    return // nothing to copy — silent
+  }
+
+  const sourceProject = generateProjectName(gitRoot)
+  const targetProject = generateProjectName(worktreePath)
+  console.log("📦 Cloning Docker volumes...")
+
+  let copiedCount = 0
+  let skippedCount = 0
+
+  for (const key of cloneable) {
+    const source = resolveVolumeName(composeConfig, key, sourceProject)
+    const target = resolveVolumeName(composeConfig, key, targetProject)
+    if (!source || !target) {
+      // discoverCloneableVolumes が external を弾いているのでここには来ない想定
+      continue
+    }
+    if (source.external) {
+      // 念のためのガード
+      continue
+    }
+
+    // source 存在チェック
+    if (!volumeExists(source.name)) {
+      console.log(`  ℹ️  ${key}: source volume '${source.name}' does not exist yet — skipping`)
+      skippedCount++
+      continue
+    }
+
+    // 稼働中コンテナチェック
+    const usingContainers = getContainersUsingVolume(source.name)
+    if (usingContainers.length > 0 && !options.force) {
+      console.log(
+        `  ⚠️  ${key}: source volume '${source.name}' is in use by ${usingContainers.join(", ")} — skipping (use --force-volume-copy to clone live)`
+      )
+      skippedCount++
+      continue
+    }
+
+    // target が populated チェック
+    if (volumeExists(target.name) && !options.force) {
+      console.log(
+        `  ⚠️  ${key}: target volume '${target.name}' already exists — skipping (use --force-volume-copy to overwrite)`
+      )
+      skippedCount++
+      continue
+    }
+
+    try {
+      await copyVolume(source.name, target.name, {
+        onProgress: createVolumeCopyProgressHandler(`  📦 ${key}`),
+      })
+      console.log(`  ✅ Cloned ${source.name} → ${target.name}`)
+      copiedCount++
+    } catch (error) {
+      console.log(`  ❌ Failed to clone ${key}: ${getErrorMessage(error)}`)
+      skippedCount++
+    }
+  }
+
+  console.log(
+    `  → ${copiedCount} volume(s) cloned, ${skippedCount} skipped`
+  )
 }
 
 /**
