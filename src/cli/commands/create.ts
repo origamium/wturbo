@@ -16,11 +16,12 @@ import {
   writeComposeFile,
 } from "../../core/docker/compose.js"
 import { copyAndAdjustEnvFile, parseEnvFile } from "../../core/environment/processor.js"
-import { branchExists, getGitRoot, isGitRepository } from "../../core/git/repository.js"
+import { branchExists, getGitRootOrThrow } from "../../core/git/repository.js"
 import { createWorktree, getWorktreePath, listWorktrees } from "../../core/git/worktree.js"
 import type { WtbConfig } from "../../types/index.js"
 import { CLIError, getErrorMessage } from "../../utils/error.js"
 import { executeLifecycleCommand } from "../../utils/exec.js"
+import { withErrorHandling } from "../utils/command-helpers.js"
 
 interface CreateOptions {
   path?: string
@@ -48,18 +49,7 @@ export function createCommand(): Command {
     .option("--no-link", "Skip symlink creation")
     .option("--no-start", "Skip start_command execution")
     .option("--dry-run", "Show what would be done without making changes")
-    .action(async (branch: string, options: CreateOptions) => {
-      try {
-        await executeCreateCommand(branch, options)
-      } catch (error) {
-        if (error instanceof CLIError) {
-          console.error(`Error: ${error.message}`)
-          process.exit(error.exitCode)
-        }
-        console.error(`Error: ${getErrorMessage(error)}`)
-        process.exit(EXIT_CODES.GENERAL_ERROR)
-      }
-    })
+    .action(withErrorHandling(executeCreateCommand))
 }
 
 /**
@@ -69,12 +59,7 @@ async function executeCreateCommand(
   branch: string,
   options: CreateOptions
 ): Promise<void> {
-  // Git リポジトリチェック
-  if (!isGitRepository()) {
-    throw new CLIError("Not in a git repository", EXIT_CODES.NOT_GIT_REPOSITORY)
-  }
-
-  const gitRoot = getGitRoot()
+  const gitRoot = getGitRootOrThrow()
 
   // 既存のworktreeチェック
   const existingPath = getWorktreePath(branch)

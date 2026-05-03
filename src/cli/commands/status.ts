@@ -7,7 +7,7 @@
 import { existsSync } from "node:fs"
 import * as path from "node:path"
 import { Command } from "commander"
-import { ENV_FILE_NAMES, EXIT_CODES } from "../../constants/index.js"
+import { ENV_FILE_NAMES } from "../../constants/index.js"
 import { loadConfig } from "../../core/config/loader.js"
 import {
   getDockerInfo,
@@ -17,10 +17,10 @@ import {
 } from "../../core/docker/client.js"
 import { findComposeFile, readComposeFile } from "../../core/docker/compose.js"
 // Core modules
-import { getCurrentBranch, getGitRoot, isGitRepository } from "../../core/git/repository.js"
+import { getCurrentBranch, getGitRoot, getGitRootOrThrow } from "../../core/git/repository.js"
 import { listWorktrees } from "../../core/git/worktree.js"
 import type { CommandOptions } from "../../types/index.js"
-import { getErrorMessage } from "../../utils/error.js"
+import { withErrorHandling } from "../utils/command-helpers.js"
 
 /**
  * statusコマンドを作成
@@ -38,14 +38,7 @@ export function statusCommand(): Command {
     .description("Show status of worktrees and their Docker environments")
     .option("-a, --all", "Show all worktrees, not just current")
     .option("--docker-only", "Show only Docker-related information")
-    .action(async (options: CommandOptions) => {
-      try {
-        await executeStatusCommand(options)
-      } catch (error) {
-        console.error(`Error: ${getErrorMessage(error)}`)
-        process.exit(EXIT_CODES.GENERAL_ERROR)
-      }
-    })
+    .action(withErrorHandling(executeStatusCommand))
 }
 
 /**
@@ -60,14 +53,10 @@ export function statusCommand(): Command {
  * ```
  */
 async function executeStatusCommand(options: CommandOptions): Promise<void> {
-  // Git リポジトリチェック
-  if (!isGitRepository()) {
-    console.error("Error: Not in a git repository")
-    process.exit(EXIT_CODES.NOT_GIT_REPOSITORY)
-  }
+  // Git リポジトリチェック + ルート取得
+  const gitRoot = getGitRootOrThrow()
 
   // docker_compose_file 設定を取得（設定読み込みエラーは非致命的 → Docker スキップ）
-  const gitRoot = getGitRoot()
   let dockerComposeFile = ""
   try {
     const config = loadConfig(gitRoot)

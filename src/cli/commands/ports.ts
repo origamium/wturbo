@@ -14,7 +14,7 @@ import {
   readComposeFile,
 } from "../../core/docker/compose.js"
 import { parseEnvFile } from "../../core/environment/processor.js"
-import { getGitRoot, isGitRepository } from "../../core/git/repository.js"
+import { getGitRootOrThrow } from "../../core/git/repository.js"
 import { listWorktrees } from "../../core/git/worktree.js"
 import type {
   ComposeServicePorts,
@@ -24,6 +24,7 @@ import type {
   WorktreePorts,
 } from "../../types/index.js"
 import { CLIError, getErrorMessage } from "../../utils/error.js"
+import { withErrorHandling } from "../utils/command-helpers.js"
 import { renderPortsJson, renderPortsPretty } from "../utils/ports-render.js"
 
 /**
@@ -36,26 +37,11 @@ export function portsCommand(): Command {
     )
     .option("--all", "Output an array of all worktrees (default: current worktree only)")
     .option("--pretty", "Human-readable table instead of JSON")
-    .action(async (options: PortsCommandOptions) => {
-      try {
-        await executePortsCommand(options)
-      } catch (error) {
-        if (error instanceof CLIError) {
-          console.error(`Error: ${error.message}`)
-          process.exit(error.exitCode)
-        }
-        console.error(`Error: ${getErrorMessage(error)}`)
-        process.exit(EXIT_CODES.GENERAL_ERROR)
-      }
-    })
+    .action(withErrorHandling(executePortsCommand))
 }
 
 async function executePortsCommand(options: PortsCommandOptions): Promise<void> {
-  if (!isGitRepository()) {
-    throw new CLIError("Not in a git repository", EXIT_CODES.NOT_GIT_REPOSITORY)
-  }
-
-  const gitRoot = getGitRoot()
+  const gitRoot = getGitRootOrThrow()
   const config = loadConfig(gitRoot)
   const worktrees = listWorktrees()
   const currentPath = path.resolve(process.cwd())

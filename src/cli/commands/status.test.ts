@@ -6,11 +6,13 @@
 import type { Command } from "commander"
 import { existsSync } from "fs-extra"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { EXIT_CODES } from "../../constants/index.js"
 import * as loaderModule from "../../core/config/loader.js"
 import * as dockerClientModule from "../../core/docker/client.js"
 import * as dockerComposeModule from "../../core/docker/compose.js"
 import * as repositoryModule from "../../core/git/repository.js"
 import * as worktreeModule from "../../core/git/worktree.js"
+import { CLIError } from "../../utils/error.js"
 import { statusCommand } from "./status.js"
 
 // Mock dependencies
@@ -36,6 +38,7 @@ describe("Status Command (Refactored)", () => {
 
     // Default: Docker IS configured so existing Docker-probe tests keep working.
     vi.mocked(repositoryModule.getGitRoot).mockReturnValue("/project")
+    vi.mocked(repositoryModule.getGitRootOrThrow).mockReturnValue("/project")
     vi.mocked(loaderModule.loadConfig).mockReturnValue({
       base_branch: "main",
       docker_compose_file: "./docker-compose.yml",
@@ -68,7 +71,9 @@ describe("Status Command (Refactored)", () => {
     })
 
     it("should exit with error when not in git repository", async () => {
-      vi.mocked(repositoryModule.isGitRepository).mockReturnValue(false)
+      vi.mocked(repositoryModule.getGitRootOrThrow).mockImplementation(() => {
+        throw new CLIError("Not in a git repository", EXIT_CODES.NOT_GIT_REPOSITORY)
+      })
 
       const mockExit = vi.spyOn(process, "exit").mockImplementation(() => {
         throw new Error("process.exit called")

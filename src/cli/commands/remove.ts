@@ -9,10 +9,11 @@ import * as path from "node:path"
 import { Command } from "commander"
 import { EXIT_CODES } from "../../constants/index.js"
 import { loadConfig } from "../../core/config/loader.js"
-import { getGitRoot, isGitRepository } from "../../core/git/repository.js"
+import { getGitRootOrThrow } from "../../core/git/repository.js"
 import { getWorktreePath, listWorktrees, removeWorktree } from "../../core/git/worktree.js"
 import { CLIError, getErrorMessage } from "../../utils/error.js"
 import { executeLifecycleCommand } from "../../utils/exec.js"
+import { withErrorHandling } from "../utils/command-helpers.js"
 
 interface RemoveOptions {
   force?: boolean
@@ -30,30 +31,14 @@ export function removeCommand(): Command {
     .option("-f, --force", "Force removal even if worktree has uncommitted changes")
     .option("--no-docker", "Skip Docker Compose teardown")
     .option("--no-end", "Skip end_command execution")
-    .action(async (branch: string, options: RemoveOptions) => {
-      try {
-        await executeRemoveCommand(branch, options)
-      } catch (error) {
-        if (error instanceof CLIError) {
-          console.error(`Error: ${error.message}`)
-          process.exit(error.exitCode)
-        }
-        console.error(`Error: ${getErrorMessage(error)}`)
-        process.exit(EXIT_CODES.GENERAL_ERROR)
-      }
-    })
+    .action(withErrorHandling(executeRemoveCommand))
 }
 
 /**
  * removeコマンドのメイン実行ロジック
  */
 async function executeRemoveCommand(branch: string, options: RemoveOptions): Promise<void> {
-  // Git リポジトリチェック
-  if (!isGitRepository()) {
-    throw new CLIError("Not in a git repository", EXIT_CODES.NOT_GIT_REPOSITORY)
-  }
-
-  const gitRoot = getGitRoot()
+  const gitRoot = getGitRootOrThrow()
 
   // worktreeのパスを取得
   const worktreePath = getWorktreePath(branch)

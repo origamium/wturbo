@@ -4,9 +4,11 @@
 
 import type { Command } from "commander"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { EXIT_CODES } from "../../constants/index.js"
 import * as commitInfoModule from "../../core/git/commit-info.js"
 import * as repositoryModule from "../../core/git/repository.js"
 import * as worktreeModule from "../../core/git/worktree.js"
+import { CLIError } from "../../utils/error.js"
 import { lsCommand } from "./ls.js"
 
 vi.mock("../../core/git/repository.js")
@@ -24,8 +26,7 @@ describe("ls command", () => {
     consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
     command = lsCommand()
 
-    vi.mocked(repositoryModule.isGitRepository).mockReturnValue(true)
-    vi.mocked(repositoryModule.getGitRoot).mockReturnValue("/repo")
+    vi.mocked(repositoryModule.getGitRootOrThrow).mockReturnValue("/repo")
     vi.mocked(worktreeModule.listWorktrees).mockReturnValue([
       { path: "/repo", branch: "main", head: "abc" },
       { path: "/repo-feature", branch: "feature", head: "def" },
@@ -50,7 +51,9 @@ describe("ls command", () => {
   })
 
   it("exits NOT_GIT_REPOSITORY when outside a git repo", async () => {
-    vi.mocked(repositoryModule.isGitRepository).mockReturnValue(false)
+    vi.mocked(repositoryModule.getGitRootOrThrow).mockImplementation(() => {
+      throw new CLIError("Not in a git repository", EXIT_CODES.NOT_GIT_REPOSITORY)
+    })
     const mockExit = vi.spyOn(process, "exit").mockImplementation(() => {
       throw new Error("exited")
     })

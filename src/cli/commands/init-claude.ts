@@ -8,6 +8,7 @@ import { EXIT_CODES } from "../../constants/index.js"
 import type { InitClaudeOptions } from "../../types/index.js"
 import { CLIError, getErrorMessage } from "../../utils/error.js"
 import { installClaudeSkill } from "../utils/claude-skill-install.js"
+import { withErrorHandling } from "../utils/command-helpers.js"
 
 /**
  * init-claudeコマンドを作成
@@ -20,18 +21,7 @@ export function initClaudeCommand(): Command {
     .option("-f, --force", "Overwrite existing SKILL.md")
     .option("--user", "Install globally at ~/.claude/skills/wtb/ instead of per-repo")
     .option("--dry-run", "Print the target path without writing")
-    .action(async (options: InitClaudeOptions) => {
-      try {
-        await executeInitClaudeCommand(options)
-      } catch (error) {
-        if (error instanceof CLIError) {
-          console.error(`Error: ${error.message}`)
-          process.exit(error.exitCode)
-        }
-        console.error(`Error: ${getErrorMessage(error)}`)
-        process.exit(EXIT_CODES.GENERAL_ERROR)
-      }
-    })
+    .action(withErrorHandling(executeInitClaudeCommand))
 }
 
 async function executeInitClaudeCommand(options: InitClaudeOptions): Promise<void> {

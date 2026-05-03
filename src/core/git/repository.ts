@@ -3,7 +3,9 @@
  * Gitリポジトリの基本的な状態確認と情報取得を担当
  */
 
+import { EXIT_CODES } from "../../constants/index.js"
 import type { ExecOptions } from "../../types/index.js"
+import { CLIError } from "../../utils/error.js"
 import { execGitSafe } from "../../utils/exec.js"
 
 /**
@@ -33,6 +35,19 @@ export function getGitRoot(cwd?: string): string {
     throw new Error("Not in a Git repository")
   }
   return execGitSafe(["rev-parse", "--show-toplevel"], { cwd })
+}
+
+/**
+ * Git リポジトリ内であることを保証してルートを返す（CLI コマンド向けガード）
+ *
+ * リポジトリでない場合は CLIError(NOT_GIT_REPOSITORY) を throw するので、
+ * 呼び出し側は withErrorHandling 経由で適切な exit code に変換される。
+ */
+export function getGitRootOrThrow(cwd?: string): string {
+  if (!isGitRepository(cwd)) {
+    throw new CLIError("Not in a git repository", EXIT_CODES.NOT_GIT_REPOSITORY)
+  }
+  return getGitRoot(cwd)
 }
 
 /**
