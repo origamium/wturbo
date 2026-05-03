@@ -96,7 +96,9 @@ cd "$(wtb ls -p | fzf)"                                        # fuzzy-jump
 wtb create feature/my-new-feature
 ```
 
-Phases (in order): `git worktree add` → copy gitignored files → create symlinks → copy-and-adjust `.env` → rewrite Compose ports → run `start_command`.
+Phases (in order): `git worktree add` → copy gitignored files → create symlinks → copy-and-adjust `.env` → rewrite Compose ports → **clone Docker named volumes** → run `start_command`.
+
+The volume-clone step is automatic when `docker_compose_file` is set: every named (non-`external`) Docker volume is copied from the source project to the new worktree's project, so e.g. PostgreSQL data carries over. **Volumes whose source container is running are skipped with a warning** to avoid corruption. If the user reports an unexpected skip, suggest they `docker compose down` on the source side first, or use `--force-volume-copy` if they accept the data-loss risk.
 
 Useful flags:
 
@@ -104,6 +106,8 @@ Useful flags:
 - `-p <path>` — custom worktree location (default: `../worktree-<branch-with-slashes-as-dashes>`).
 - `--no-create-branch` — attach to an existing branch instead of creating a new one.
 - `--no-docker` / `--no-env` / `--no-copy` / `--no-link` / `--no-start` — skip individual phases.
+- `--no-volume-copy` — skip the volume-clone phase entirely (start with empty volumes).
+- `--force-volume-copy` — clone even when source containers are running or the target already has data (data-loss risk; dev only).
 
 After creation, the new worktree path is printed at the end. `cd` there, then re-run `wtb ports` to see the *new* worktree's adjusted ports.
 
@@ -124,8 +128,9 @@ Flags:
 - `-f, --force` — allow removal with uncommitted changes.
 - `--no-docker` — skip `docker compose down` (useful when the Docker daemon is already stopped).
 - `--no-end` — skip `end_command`.
+- `--remove-volumes` — also delete the worktree's Docker volumes (`docker compose down -v`). **Destructive for cloned data — confirm with the user.**
 
-Ordering is: Docker teardown → `end_command` → `git worktree remove`. Setting `end_command` in `wtb.yaml` suppresses the automatic Docker teardown (the user owns shutdown).
+Ordering is: Docker teardown → `end_command` → `git worktree remove`. Setting `end_command` in `wtb.yaml` suppresses the automatic Docker teardown (the user owns shutdown). The default leaves volumes intact (consistent with `docker compose down`); use `--remove-volumes` only if the user explicitly wants the data gone.
 
 ## Inspecting state
 
@@ -150,6 +155,7 @@ Use `wtb status` for diagnosis when ports look wrong or services are missing —
 | `start_command` / `end_command` | Lifecycle scripts run via `/bin/sh` in the worktree. |
 | `env.file` | Env files processed per worktree. |
 | `env.adjust` | Per-key transform: `number` = auto-bump to next free port, `string` = literal replace, `null` = remove. |
+| `volumes.exclude` | Compose volume keys to exclude from auto-cloning. Default `[]` (clone every named non-`external` volume). |
 
 ## Troubleshooting hints
 

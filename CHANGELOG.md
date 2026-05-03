@@ -7,10 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Removed
-- **Dead code**: deleted `src/cli/utils/progress.ts` (Spinner, MultiVolumeProgressTracker)
-  and `src/core/docker/volume.ts` (volume copy machinery). Neither was reachable from
-  any CLI command. Net reduction ~630 LoC.
+### Added
+- **Docker volume auto-cloning** in `wtb create`: every named (non-`external`)
+  Docker volume declared in `docker_compose_file` is now copied from the source
+  project to the new worktree's project, so e.g. PostgreSQL data carries over
+  without re-seeding. Volumes whose source container is running are skipped with
+  a warning to avoid corruption (use `--force-volume-copy` to clone live anyway).
+  Excludable via `volumes.exclude` in `wtb.yaml`. Skip the whole phase with
+  `wtb create --no-volume-copy`.
+- New `wtb remove --remove-volumes` flag — runs `docker compose down -v` so the
+  worktree's cloned volumes are dropped together with the worktree.
+- `resolveVolumeName()`, `discoverCloneableVolumes()`, `getContainersUsingVolume()`,
+  `volumeExists()` exported from `src/core/docker/volume.ts` for programmatic use.
 
 ### Changed
 - Centralized command error handling via new `withErrorHandling` wrapper
