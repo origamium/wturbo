@@ -62,4 +62,27 @@ describe("resolveComposeProjectName", () => {
     const config = empty({ name: 42 as any })
     expect(resolveComposeProjectName(config, "/tmp/dir_name")).toBe("dir_name")
   })
+
+  describe("COMPOSE_PROJECT_NAME env var", () => {
+    it("uses COMPOSE_PROJECT_NAME when set and no `name:` field", () => {
+      const env = { COMPOSE_PROJECT_NAME: "from_env" }
+      expect(resolveComposeProjectName(empty(), "/tmp/dir_name", env)).toBe("from_env")
+    })
+
+    it("explicit `name:` field beats COMPOSE_PROJECT_NAME (Compose precedence)", () => {
+      const config = empty({ name: "from_yaml" } as ComposeConfig)
+      const env = { COMPOSE_PROJECT_NAME: "from_env" }
+      expect(resolveComposeProjectName(config, "/tmp/dir_name", env)).toBe("from_yaml")
+    })
+
+    it("ignores empty COMPOSE_PROJECT_NAME and falls back to dir basename", () => {
+      const env = { COMPOSE_PROJECT_NAME: "" }
+      expect(resolveComposeProjectName(empty(), "/tmp/dir_name", env)).toBe("dir_name")
+    })
+
+    it("ignores undefined COMPOSE_PROJECT_NAME and falls back to dir basename", () => {
+      const env: NodeJS.ProcessEnv = {}
+      expect(resolveComposeProjectName(empty(), "/tmp/dir_name", env)).toBe("dir_name")
+    })
+  })
 })
